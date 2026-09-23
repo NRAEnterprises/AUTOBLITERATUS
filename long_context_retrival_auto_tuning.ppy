@@ -1,0 +1,47 @@
+# abliterate/tuning/59_long_context_retrieval_auto_tuning.py
+#
+# Tuning Type 59 of 103:
+# Long-context retrieval auto tuning.
+#
+# Runtime toggle: --enable tuning.long_context_retrieval  (default: on)
+#
+# Effect:
+#   Verify the model can still find information deep in context after
+#   ablation.
+#
+# This file owns:
+#   - needle-in-haystack measurement
+#   - retrieval accuracy measurement
+#   - restoration
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Callable
+
+
+@dataclass
+class RetrievalProfile:
+    accuracy: float
+    corrected: bool
+
+
+class LongContextRetrievalAutoTuning:
+
+    def __init__(self, measure: Callable, apply_correction: Callable,
+                 enabled: bool = True):
+        self.measure = measure
+        self.apply_correction = apply_correction
+        self.enabled = enabled
+
+    def run(self, model, tokenizer, baseline: float) -> RetrievalProfile:
+        if not self.enabled:
+            return RetrievalProfile(0.0, False)
+        current = self.measure(model, tokenizer)
+        if current < baseline:
+            self.apply_correction(model)
+            return RetrievalProfile(current, True)
+        return RetrievalProfile(current, False)
+
+
+TOGGLE = {"id": "tuning.long_context_retrieval", "default": True}

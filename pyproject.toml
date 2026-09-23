@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autobliteratus"
+version = "0.1.0"
+description = "Post-ablation architecture-aware quantization-calibrated capability tuning."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "AGPL-3.0-or-later" }
+dependencies = [
+    "torch>=2.0",
+    "transformers>=4.40",
+    "accelerate>=0.30",
+    "peft>=0.10",
+    "safetensors>=0.4",
+    "pyyaml>=6.0",
+    "numpy>=1.24",
+    "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "ruff>=0.6", "mypy>=1.11"]
+
+[project.scripts]
+autobliteratus = "autobliteratus.__main__:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["autobliteratus*"]
+
+[tool.setuptools.package-data]
+autobliteratus = ["py.typed"]
