@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: autobliteratus
+Version: 0.1.0
+Summary: Post-ablation architecture-aware quantization-calibrated capability tuning.
+License: AGPL-3.0-or-later
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: torch>=2.0
+Requires-Dist: transformers>=4.40
+Requires-Dist: accelerate>=0.30
+Requires-Dist: peft>=0.10
+Requires-Dist: safetensors>=0.4
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: numpy>=1.24
+Requires-Dist: tqdm>=4.65
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4; extra == "dev"
+Requires-Dist: ruff>=0.6; extra == "dev"
+Requires-Dist: mypy>=1.11; extra == "dev"
