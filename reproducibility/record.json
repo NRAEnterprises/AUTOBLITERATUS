@@ -1,1 +1,10 @@
-
+{
+  "seeds": {
+    "python": 4139831529,
+    "numpy": 2147483648,
+    "torch": 2027555521754809630
+  },
+  "env": {
+    "TORCHINDUCTOR_CACHE_DIR": "/data/data/com.termux/files/usr/tmp/torchinductor_u0_a960"
+  }
+}
