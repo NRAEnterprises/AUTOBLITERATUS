@@ -1,11 +1,5 @@
 """AUTOBLITERATUS: post-ablation architecture-aware quantization-calibrated
-capability tuning for local and remote language models.
-
-Every tuning type is a separate module under ``autobliteratus.tuning``.
-Every tuning type is independently toggleable at runtime. The orchestrator
-in ``autobliteratus.tuning.tuning_orchestrator`` reads the toggle registry
-and runs only the tuning types whose toggles are on.
-"""
+capability tuning for local and remote language models."""
 
 from __future__ import annotations
 
