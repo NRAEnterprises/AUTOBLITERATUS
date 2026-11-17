@@ -143,3 +143,15 @@ Only after the functional gates above are enforced, connect the observatory to s
 ## Release decision
 
 The repository is synchronized and the diagnostic/discovery scaffolding is materially ahead of the original GitHub state. It is **not ready for unrestricted mutating production runs**. The next implementation task should be the mutation firewall plus transactional rollback, followed by the topology proposal importer and discovery promotion contract. Visual work should remain last until those functional boundaries are executable and tested.
+
+## Implementation follow-up
+
+The first function-priority safety increment is now implemented on top of this audit:
+
+- `refusal_direction_ablation`, `calibrated_quantization`, and `model_export` are opt-in by default.
+- The CLI exposes `--allow-mutation`; direct mutating stages also enforce the same authorization contract.
+- `MutationTransaction` creates an exact state snapshot, atomically publishes the checkpoint directory, restores the original model on pipeline failure, and verifies exact fingerprint restoration.
+- `topology_proposal.py` validates observatory schema/safety fields, graph references, and caller-supplied model identity before returning a metadata-only proposal envelope.
+- The implementation is covered by dedicated firewall, rollback, atomic-publication, and topology-tamper tests.
+
+Post-change validation: **248 passed, 17 skipped**, Ruff clean, package build successful. The safety work reduces accidental mutation risk but does not yet replace the separate baseline/regression/resource-budget promotion gates; those remain required for the next hardening increment.

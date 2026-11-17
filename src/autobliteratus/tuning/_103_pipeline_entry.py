@@ -34,6 +34,7 @@ def run(
         deployment_target=deployment_target,
         enable=enable,
         disable=disable,
+        allow_mutation=kwargs.get("allow_mutation", False),
         dry_run=dry_run,
         ablation_strength=kwargs.get("ablation_strength", 1.0),
         ablation_component=kwargs.get("ablation_component", "attn.out"),

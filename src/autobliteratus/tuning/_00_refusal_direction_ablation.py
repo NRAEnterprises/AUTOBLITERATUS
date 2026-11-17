@@ -7,12 +7,15 @@ from typing import Any
 
 TOGGLE = {
     "id": "tuning.refusal_direction_ablation",
-    "default": True,
+    "default": False,
     "desc": "Project estimated refusal directions out of supported layer weights.",
 }
 
 
 def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
+    from autobliteratus.tuning.mutation_firewall import require_mutation_authorized
+
+    require_mutation_authorized("tuning.refusal_direction_ablation", context)
     strength = float(context.get("ablation_strength", 1.0))
     if not math.isfinite(strength) or not 0.0 < strength <= 1.0:
         raise ValueError("ablation_strength must be finite and in the interval (0, 1].")

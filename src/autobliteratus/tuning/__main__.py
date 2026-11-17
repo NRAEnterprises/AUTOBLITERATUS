@@ -24,6 +24,7 @@ def main(argv: list[str] | None = None) -> int:
         deployment_target=args.deployment_target,
         enable=args.enable,
         disable=args.disable,
+        allow_mutation=getattr(args, "allow_mutation", False),
         dry_run=args.dry_run,
         ablation_strength=args.ablation_strength,
         ablation_component=args.ablation_component,

@@ -58,6 +58,7 @@ def run_pipeline(
     enable: list[str] | None = None,
     disable: list[str] | None = None,
     dry_run: bool = False,
+    allow_mutation: bool = False,
     ablation_strength: float = 1.0,
     ablation_component: str = "attn.out",
     trust_remote_code: bool = False,
@@ -85,6 +86,8 @@ def run_pipeline(
     from autobliteratus.core.adapters import TuningAdapter
     from autobliteratus.tuning._96_model_export import _validate_disjoint_paths
     from autobliteratus.tuning.dispatch import build_registry
+    from autobliteratus.tuning.mutation_firewall import MUTATING_STAGE_IDS
+    from autobliteratus.tuning.mutation_transaction import MutationTransaction
     from autobliteratus.tuning.runtime_selector import RuntimeSelector
     from autobliteratus.tuning.toggle_registry import TOGGLES, enabled_toggles
     from autobliteratus.tuning.tuning_orchestrator import TuningOrchestrator
@@ -170,6 +173,9 @@ def run_pipeline(
         "kv_cache_timeout_seconds",
         "kv_cache_cancelled",
         "kv_cache_output_tolerance",
+        "topology_proposal_path",
+        "topology_sandbox_root",
+        "topology_expected_identity",
     }
     if stage_options is not None and not isinstance(stage_options, dict):
         raise TypeError("stage_options must be a mapping of supported stage option names to values.")
@@ -249,6 +255,20 @@ def run_pipeline(
         overrides[quantization_id] = False
 
     resolved = enabled_toggles(overrides, allow_unavailable=plan_only)
+    mutating_stage_ids = sorted(
+        stage_id for stage_id in MUTATING_STAGE_IDS if resolved.get(stage_id, False)
+    )
+    if mutating_stage_ids and not dry_run and not plan_only:
+        if allow_mutation is not True:
+            raise PermissionError(
+                "Mutation-capable stages are disabled by default; pass allow_mutation=True "
+                "or --allow-mutation for an explicitly authorized transactional run."
+            )
+        if not resolved.get("tuning.model_export", False):
+            raise ValueError(
+                "A modifying run must explicitly enable tuning.model_export so the "
+                "validated artifact is published only after the transaction succeeds."
+            )
     dependencies = {key: list(value) for key, value in DEPENDENCIES.items()}
     evaluation_enabled = resolved.get(baseline_id, False) or resolved.get(regression_id, False)
     if evaluation_enabled:
@@ -397,6 +417,7 @@ def run_pipeline(
         "target_frameworks": requested_frameworks,
         "deployment_target": deployment_target,
         "dry_run": dry_run,
+        "allow_mutation": allow_mutation,
         "ablation_strength": ablation_strength,
         "ablation_component": ablation_component,
         "trust_remote_code": trust_remote_code,
@@ -417,6 +438,35 @@ def run_pipeline(
         "_resolved_toggles": resolved,
     }
     context.update(stage_options or {})
+
+    mutation_transaction = None
+    if mutating_stage_ids and not dry_run:
+        topology_source = context.get("topology_proposal_path")
+        if topology_source is not None:
+            from autobliteratus.core.topology_proposal import validate_topology_proposal
+
+            expected_identity = context.get("topology_expected_identity")
+            if not isinstance(expected_identity, dict) or not expected_identity:
+                raise ValueError(
+                    "topology_expected_identity must be provided when topology_proposal_path is used."
+                )
+            context["topology_proposal_report"] = validate_topology_proposal(
+                topology_source,
+                expected_identity=expected_identity,
+                sandbox_root=context.get("topology_sandbox_root"),
+            )
+        mutation_transaction = MutationTransaction.begin(
+            adapter,
+            work_dir,
+            model_revision=model_revision,
+            stage="runtime-mutation",
+        )
+        context["mutation_transaction"] = mutation_transaction
+        context["mutation_gate"] = {
+            "status": "armed",
+            "stages": mutating_stage_ids,
+            "topology_proposal_validated": "topology_proposal_report" in context,
+        }
 
     registry = build_registry(adapter, context)
 
@@ -449,6 +499,34 @@ def run_pipeline(
                 {"id": audit_id, "error_type": type(exc).__name__, "error": str(exc)}
             )
 
+    mutation_transaction_report = None
+    if mutation_transaction is not None:
+        if report.failed:
+            try:
+                mutation_transaction_report = mutation_transaction.rollback("pipeline_failure")
+                context["model_modified"] = False
+            except Exception as exc:  # noqa: BLE001 - rollback failure is part of the final report.
+                report.failed.append(
+                    {
+                        "id": "tuning.mutation_transaction",
+                        "error_type": type(exc).__name__,
+                        "error": str(exc),
+                    }
+                )
+        else:
+            try:
+                mutation_transaction_report = mutation_transaction.commit()
+            except Exception as exc:  # noqa: BLE001 - commit failure must fail closed and roll back.
+                report.failed.append(
+                    {
+                        "id": "tuning.mutation_transaction",
+                        "error_type": type(exc).__name__,
+                        "error": str(exc),
+                    }
+                )
+                mutation_transaction_report = mutation_transaction.rollback("commit_failure")
+                context["model_modified"] = False
+
     return {
         "success": not report.failed,
         "dry_run": dry_run,
@@ -480,6 +558,8 @@ def run_pipeline(
         "resource_budget": context.get("resource_budget_report"),
         "kv_cache": context.get("kv_cache_report"),
         "audit": context.get("audit_report"),
+        "topology_proposal": context.get("topology_proposal_report"),
+        "mutation_transaction": mutation_transaction_report,
         "output_dir": context.get("exported_path"),
         "export": context.get("export_report"),
     }

@@ -13,6 +13,7 @@ from autobliteratus.tuning._96_model_export import (
     _validate_disjoint_paths,
 )
 from autobliteratus.tuning.dispatch import build_registry
+from autobliteratus.tuning.mutation_firewall import MutationAuthorizationError
 from autobliteratus.tuning.toggle_registry import TOGGLES
 
 
@@ -50,7 +51,7 @@ def test_projection_changes_weights_without_building_dense_projection() -> None:
     assert not project_out(handle, 0, torch.tensor([1.0, 0.0, 0.0]), strength=1.0)
 
 
-def test_ablation_stage_fails_if_it_cannot_change_any_weights() -> None:
+def test_ablation_stage_is_blocked_without_mutation_authorization() -> None:
     class FakeAdapter:
         def refusal_directions(self):
             return {"directions": {0: torch.tensor([1.0, 0.0])}}
@@ -59,7 +60,7 @@ def test_ablation_stage_fails_if_it_cannot_change_any_weights() -> None:
             return False
 
     context = {"ablation_strength": 1.0, "ablation_component": "attn.out"}
-    with pytest.raises(RuntimeError, match="No supported"):
+    with pytest.raises(MutationAuthorizationError, match="requires allow_mutation"):
         run_ablation(FakeAdapter(), context)
     assert context.get("model_modified", False) is False
 

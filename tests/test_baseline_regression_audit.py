@@ -260,7 +260,11 @@ def test_plan_orders_baseline_before_edits_and_regression_after(monkeypatch, tmp
         model_path="not-downloaded-model",
         work_dir=str(tmp_path / "work"),
         plan_only=True,
-        enable=["tuning.benchmark_regression_auto"],
+        enable=[
+            "tuning.benchmark_regression_auto",
+            "tuning.refusal_direction_ablation",
+            "tuning.model_export",
+        ],
         stage_options={"evaluation_texts": ["evaluation sample"]},
     )
     order = result["plan"]["operation_graph"]

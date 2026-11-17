@@ -71,6 +71,9 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
     Modes ending in ``weight-only`` omit activation quantization. Other modes
     use calibrated int8 activations and require representative text samples.
     """
+    from autobliteratus.tuning.mutation_firewall import require_mutation_authorized
+
+    require_mutation_authorized("tuning.calibrated_quantization", context)
     mode = str(context.get("quantization", "none"))
     weight_types = {
         "quanto-int8": "qint8",

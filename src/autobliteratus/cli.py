@@ -96,6 +96,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--deployment-target", default="server", choices=["server", "desktop", "edge", "mobile"])
     p.add_argument("--enable", nargs="*", default=[], metavar="TOGGLE")
     p.add_argument("--disable", nargs="*", default=[], metavar="TOGGLE")
+    p.add_argument(
+        "--allow-mutation",
+        action="store_true",
+        help="Explicitly authorize transactional in-memory model mutation; disabled by default.",
+    )
     p.add_argument("--list-toggles", action="store_true")
     dry_run_group = p.add_mutually_exclusive_group()
     dry_run_group.add_argument("--dry-run", dest="dry_run", action="store_true")

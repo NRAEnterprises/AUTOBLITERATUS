@@ -16,7 +16,7 @@ from typing import Any
 
 TOGGLE = {
     "id": "tuning.model_export",
-    "default": True,
+    "default": False,
     "desc": "Validate and atomically save a separate full Transformers model copy.",
 }
 

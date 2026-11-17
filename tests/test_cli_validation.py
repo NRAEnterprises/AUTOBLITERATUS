@@ -49,10 +49,10 @@ def test_pipeline_rejects_export_disable_for_modifying_run_before_model_loading(
 
 def test_weight_only_mode_does_not_require_calibration_data(monkeypatch) -> None:
     def reached_loader(*args, **kwargs):
-        raise AssertionError("weight-only preflight should pass without calibration data")
+        raise AssertionError("mutation authorization should fail before model loading")
 
     monkeypatch.setattr("autobliteratus.core.adapters.TuningAdapter.from_path", reached_loader)
-    with pytest.raises(AssertionError, match="should pass"):
+    with pytest.raises(PermissionError, match="Mutation-capable stages"):
         run_pipeline(
             model_path="invalid-model",
             quantization="quanto-int8-weight-only",
