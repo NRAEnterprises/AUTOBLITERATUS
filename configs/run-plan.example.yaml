@@ -1,0 +1,12 @@
+# Run plan used for CLI plan-only validation.
+# Replace model_path with a locally available model before executing a real run.
+model_path: /path/to/authorized/model
+work_dir: ./abliterate_workspace
+output_dir: ./model-copy
+quantization: none
+device: cpu
+device_map: null
+target_frameworks:
+  - transformers
+deployment_target: server
+plan_only: true
