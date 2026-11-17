@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autobliteratus.local/schemas/current-3d-mind-map-state.schema.json",
+  "title": "AUTOBLITERATUS Model Mapping Observatory Topology Export",
+  "description": "Evidence-backed 3D model mapping, layer connectivity, mind-map branches, and adapter context. This artifact is metadata-only and cannot authorize direct model-weight mutation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "export_kind", "generated_at", "model_identity", "safety", "viewport", "nodes", "edges", "mind_map", "backend_context"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "export_kind": { "const": "model_mapping_observatory_topology" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "model_identity": { "$ref": "#/$defs/modelIdentity" },
+    "safety": { "$ref": "#/$defs/safety" },
+    "viewport": { "$ref": "#/$defs/viewport" },
+    "nodes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/node" } },
+    "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
+    "mind_map": { "$ref": "#/$defs/mindMap" },
+    "backend_context": { "type": "array", "items": { "$ref": "#/$defs/backendContext" } }
+  },
+  "$defs": {
+    "modelIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "revision", "architecture"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "revision": { "type": "string", "minLength": 1 },
+        "architecture": { "type": "string", "minLength": 1 }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["direct_weight_mutation", "downstream_mode", "requires_pipeline_validation"],
+      "properties": {
+        "direct_weight_mutation": { "const": false },
+        "downstream_mode": { "const": "sandboxed_proposal" },
+        "requires_pipeline_validation": { "const": true }
+      }
+    },
+    "viewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view", "selected_node_id", "filter"],
+      "properties": {
+        "view": { "enum": ["graph", "matrix", "mindmap"] },
+        "selected_node_id": { "type": "string", "minLength": 1 },
+        "filter": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["query", "evidence"],
+          "properties": {
+            "query": { "type": "string" },
+            "evidence": { "enum": ["all", "verified", "observed", "unknown", "blocked"] }
+          }
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "shortLabel", "kind", "group", "position", "dimensions", "parameters", "evidence", "confidence", "summary", "tensor", "tags", "metrics"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "label": { "type": "string", "minLength": 1 },
+        "shortLabel": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["model", "layer", "attention", "projection", "embedding", "norm", "output"] },
+        "group": { "type": "string", "minLength": 1 },
+        "position": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }, { "type": "number" }], "minItems": 3, "maxItems": 3 },
+        "dimensions": { "type": "string", "minLength": 1 },
+        "parameters": { "type": "string", "minLength": 1 },
+        "evidence": { "enum": ["verified", "observed", "unknown", "blocked"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "summary": { "type": "string", "minLength": 1 },
+        "tensor": { "type": "string", "minLength": 1 },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["activation", "latency", "memory"],
+          "properties": { "activation": { "type": "string" }, "latency": { "type": "string" }, "memory": { "type": "string" } }
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "target", "label", "weight", "relation"],
+      "properties": {
+        "source": { "type": "string", "minLength": 1 },
+        "target": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "weight": { "type": "number", "minimum": 0, "maximum": 1 },
+        "relation": { "enum": ["data-flow", "residual", "route", "projection"] }
+      }
+    },
+    "mindMap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root_id", "branch_ids", "interchange"],
+      "properties": {
+        "root_id": { "type": "string", "minLength": 1 },
+        "branch_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "interchange": { "type": "array", "items": { "enum": ["TheBrain", "XMind", "MindNode"] } }
+      }
+    },
+    "backendContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status", "detail"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["active", "staged", "adapter", "context", "blocked"] },
+        "detail": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
