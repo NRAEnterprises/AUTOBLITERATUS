@@ -1,0 +1,387 @@
+{
+  "schema_version": 1,
+  "host_architecture": "aarch64",
+  "compiler": "/usr/bin/g++",
+  "kernel": "clamp_scale_float32",
+  "rows": [
+    {
+      "load": "light",
+      "scalar": {
+        "mode": "scalar",
+        "length": 1,
+        "iterations": 5000,
+        "elapsed_ns": 70294,
+        "checksum": -15000.0
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 1,
+        "iterations": 5000,
+        "elapsed_ns": 58265,
+        "checksum": -15000.0
+      },
+      "speedup": 1.206453273835064
+    },
+    {
+      "load": "light",
+      "scalar": {
+        "mode": "scalar",
+        "length": 4,
+        "iterations": 5000,
+        "elapsed_ns": 96231,
+        "checksum": -15000.0
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 4,
+        "iterations": 5000,
+        "elapsed_ns": 50298,
+        "checksum": -15000.0
+      },
+      "speedup": 1.9132172253369915
+    },
+    {
+      "load": "light",
+      "scalar": {
+        "mode": "scalar",
+        "length": 16,
+        "iterations": 5000,
+        "elapsed_ns": 205277,
+        "checksum": -14210.9
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 16,
+        "iterations": 5000,
+        "elapsed_ns": 70245,
+        "checksum": -14210.9
+      },
+      "speedup": 2.9223005196099368
+    },
+    {
+      "load": "light",
+      "scalar": {
+        "mode": "scalar",
+        "length": 33,
+        "iterations": 5000,
+        "elapsed_ns": 416356,
+        "checksum": -11443.9
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 33,
+        "iterations": 5000,
+        "elapsed_ns": 92267,
+        "checksum": -11443.9
+      },
+      "speedup": 4.512512599304193
+    },
+    {
+      "load": "light",
+      "scalar": {
+        "mode": "scalar",
+        "length": 256,
+        "iterations": 5000,
+        "elapsed_ns": 2701936,
+        "checksum": -1555.44
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 256,
+        "iterations": 5000,
+        "elapsed_ns": 351084,
+        "checksum": -1555.44
+      },
+      "speedup": 7.695981588451766
+    },
+    {
+      "load": "light",
+      "scalar": {
+        "mode": "scalar",
+        "length": 1024,
+        "iterations": 5000,
+        "elapsed_ns": 10851209,
+        "checksum": -405.809
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 1024,
+        "iterations": 5000,
+        "elapsed_ns": 1308031,
+        "checksum": -405.809
+      },
+      "speedup": 8.295834731745654
+    },
+    {
+      "load": "light",
+      "scalar": {
+        "mode": "scalar",
+        "length": 16384,
+        "iterations": 5000,
+        "elapsed_ns": 177490596,
+        "checksum": -83.5588
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 16384,
+        "iterations": 5000,
+        "elapsed_ns": 19970278,
+        "checksum": -83.5588
+      },
+      "speedup": 8.887737867244512
+    },
+    {
+      "load": "medium",
+      "scalar": {
+        "mode": "scalar",
+        "length": 1,
+        "iterations": 1000,
+        "elapsed_ns": 14245,
+        "checksum": -3000.0
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 1,
+        "iterations": 1000,
+        "elapsed_ns": 11807,
+        "checksum": -3000.0
+      },
+      "speedup": 1.2064876768018973
+    },
+    {
+      "load": "medium",
+      "scalar": {
+        "mode": "scalar",
+        "length": 4,
+        "iterations": 1000,
+        "elapsed_ns": 19455,
+        "checksum": -3000.0
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 4,
+        "iterations": 1000,
+        "elapsed_ns": 10191,
+        "checksum": -3000.0
+      },
+      "speedup": 1.9090373859287606
+    },
+    {
+      "load": "medium",
+      "scalar": {
+        "mode": "scalar",
+        "length": 16,
+        "iterations": 1000,
+        "elapsed_ns": 41494,
+        "checksum": -2843.18
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 16,
+        "iterations": 1000,
+        "elapsed_ns": 14212,
+        "checksum": -2843.18
+      },
+      "speedup": 2.9196453701097664
+    },
+    {
+      "load": "medium",
+      "scalar": {
+        "mode": "scalar",
+        "length": 33,
+        "iterations": 1000,
+        "elapsed_ns": 83570,
+        "checksum": -2293.93
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 33,
+        "iterations": 1000,
+        "elapsed_ns": 30170,
+        "checksum": -2293.93
+      },
+      "speedup": 2.769970169042095
+    },
+    {
+      "load": "medium",
+      "scalar": {
+        "mode": "scalar",
+        "length": 256,
+        "iterations": 1000,
+        "elapsed_ns": 541781,
+        "checksum": -313.059
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 256,
+        "iterations": 1000,
+        "elapsed_ns": 90774,
+        "checksum": -313.059
+      },
+      "speedup": 5.968460131755789
+    },
+    {
+      "load": "medium",
+      "scalar": {
+        "mode": "scalar",
+        "length": 1024,
+        "iterations": 1000,
+        "elapsed_ns": 2165916,
+        "checksum": -71.7206
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 1024,
+        "iterations": 1000,
+        "elapsed_ns": 254960,
+        "checksum": -71.7206
+      },
+      "speedup": 8.495120803263257
+    },
+    {
+      "load": "medium",
+      "scalar": {
+        "mode": "scalar",
+        "length": 16384,
+        "iterations": 1000,
+        "elapsed_ns": 34517925,
+        "checksum": -71.7206
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 16384,
+        "iterations": 1000,
+        "elapsed_ns": 4163404,
+        "checksum": -71.7206
+      },
+      "speedup": 8.290794023352046
+    },
+    {
+      "load": "heavy",
+      "scalar": {
+        "mode": "scalar",
+        "length": 1,
+        "iterations": 100,
+        "elapsed_ns": 1518,
+        "checksum": -300.0
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 1,
+        "iterations": 100,
+        "elapsed_ns": 1239,
+        "checksum": -300.0
+      },
+      "speedup": 1.225181598062954
+    },
+    {
+      "load": "heavy",
+      "scalar": {
+        "mode": "scalar",
+        "length": 4,
+        "iterations": 100,
+        "elapsed_ns": 2043,
+        "checksum": -300.0
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 4,
+        "iterations": 100,
+        "elapsed_ns": 1132,
+        "checksum": -300.0
+      },
+      "speedup": 1.8047703180212014
+    },
+    {
+      "load": "heavy",
+      "scalar": {
+        "mode": "scalar",
+        "length": 16,
+        "iterations": 100,
+        "elapsed_ns": 4414,
+        "checksum": -284.824
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 16,
+        "iterations": 100,
+        "elapsed_ns": 1657,
+        "checksum": -284.824
+      },
+      "speedup": 2.663850331925166
+    },
+    {
+      "load": "heavy",
+      "scalar": {
+        "mode": "scalar",
+        "length": 33,
+        "iterations": 100,
+        "elapsed_ns": 8558,
+        "checksum": -229.412
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 33,
+        "iterations": 100,
+        "elapsed_ns": 2117,
+        "checksum": -229.412
+      },
+      "speedup": 4.0425129900803025
+    },
+    {
+      "load": "heavy",
+      "scalar": {
+        "mode": "scalar",
+        "length": 256,
+        "iterations": 100,
+        "elapsed_ns": 65297,
+        "checksum": -9.0
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 256,
+        "iterations": 100,
+        "elapsed_ns": 6810,
+        "checksum": -9.0
+      },
+      "speedup": 9.588399412628487
+    },
+    {
+      "load": "heavy",
+      "scalar": {
+        "mode": "scalar",
+        "length": 1024,
+        "iterations": 100,
+        "elapsed_ns": 216371,
+        "checksum": -9.0
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 1024,
+        "iterations": 100,
+        "elapsed_ns": 25805,
+        "checksum": -9.0
+      },
+      "speedup": 8.384847897694245
+    },
+    {
+      "load": "heavy",
+      "scalar": {
+        "mode": "scalar",
+        "length": 16384,
+        "iterations": 100,
+        "elapsed_ns": 3448018,
+        "checksum": -9.0
+      },
+      "simd": {
+        "mode": "simd",
+        "length": 16384,
+        "iterations": 100,
+        "elapsed_ns": 424602,
+        "checksum": -9.0
+      },
+      "speedup": 8.120588221440313
+    }
+  ],
+  "qualification": "benchmark_only; not_runtime_enabled"
+}

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 TOGGLE = {"id": "tuning.quantization_aware_capability", "default": True}
 
 

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 TOGGLE = {"id": "tuning.on_device_deployment_auto", "default": False}
 
 

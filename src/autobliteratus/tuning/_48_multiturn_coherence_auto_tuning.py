@@ -5,9 +5,8 @@ Verify conversation state survives across turns after ablation.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.multiturn_coherence_auto", "default": True}
 

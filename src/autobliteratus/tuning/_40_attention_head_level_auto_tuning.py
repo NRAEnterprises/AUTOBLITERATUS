@@ -5,9 +5,8 @@ Prune or reweight individual heads rather than whole layers.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.attention_head_level_auto", "default": True}
 

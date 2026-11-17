@@ -5,9 +5,8 @@ Verify schema compliance and format stability after ablation.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.json_structured_output_auto", "default": True}
 

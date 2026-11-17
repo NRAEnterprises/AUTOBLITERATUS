@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 TOGGLE = {"id": "tuning.per_layer_hyperparameter_auto", "default": True}
 
 

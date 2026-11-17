@@ -5,9 +5,8 @@ When guardrails self-repair, escalate correction strength automatically.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.ouroboros_loop_escalation", "default": True}
 

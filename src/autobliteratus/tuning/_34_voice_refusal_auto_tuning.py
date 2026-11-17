@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
 TOGGLE = {"id": "tuning.voice_refusal_auto", "default": False}
 
 

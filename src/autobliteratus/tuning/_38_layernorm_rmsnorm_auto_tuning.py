@@ -6,9 +6,8 @@ instability. Measure against baseline and restore.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.layernorm_rmsnorm_auto", "default": True}
 

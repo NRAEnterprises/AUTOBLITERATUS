@@ -5,9 +5,8 @@ Verify the model can still find information deep in context after ablation.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.long_context_retrieval", "default": True}
 

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 TOGGLE = {"id": "tuning.fine_tune_compatibility_auto", "default": True}
 
 

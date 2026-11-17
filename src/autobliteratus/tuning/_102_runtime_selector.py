@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
 TOGGLE = {"id": "tuning.runtime_selector", "default": True}
 
 

@@ -6,7 +6,7 @@ Pick the ablation method based on family, reasoning class, and defense type.
 from __future__ import annotations
 
 from dataclasses import dataclass
-
+from typing import ClassVar
 
 TOGGLE = {"id": "tuning.method_auto_selection", "default": True}
 
@@ -18,7 +18,7 @@ class MethodSelection:
 
 
 class MethodAutoSelection:
-    TABLE = {
+    TABLE: ClassVar[dict[tuple[str, str], str]] = {
         ("dense_transformer", "cot"):      "surgical",
         ("dense_transformer", "standard"): "advanced",
         ("moe_sparse", "cot"):             "nuclear",

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass
@@ -44,8 +45,10 @@ class TuningOrchestrator:
                 self.run_one(toggle_id, context)
                 completed.add(toggle_id)
                 report.executed.append(toggle_id)
-            except Exception as exc:
-                report.failed.append({"id": toggle_id, "error": str(exc)})
+            except Exception as exc:  # noqa: BLE001 - isolate stage failures and continue to independent reporting stages.
+                report.failed.append(
+                    {"id": toggle_id, "error_type": type(exc).__name__, "error": str(exc)}
+                )
 
         return report
 

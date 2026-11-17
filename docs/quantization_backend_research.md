@@ -1,0 +1,21 @@
+# Quantization backend research notes
+
+## Quanto findings relevant to the observed ARM64 CPU run
+
+- Quanto calibration measures per-module input/output absolute maxima per batch, then updates scales using an exponential moving average. The default momentum is 0.9 and `streamline=True`; only some activation paths are quantized. This makes calibration corpus, row order, sequence length, and module coverage potentially material. Source: https://raw.githubusercontent.com/huggingface/optimum-quanto/main/optimum/quanto/calibrate.py
+- The installed Quanto implementation uses `new_scale = momentum * old_scale + (1 - momentum) * observed_scale` after the initial scale is set from the first batch. Thus momentum 0 selects the latest observed batch, while momentum 1 retains the first non-default batch's scale. AUTOBLITERATUS currently invokes one text sample per calibration forward; at momentum 0.9, later scales can dominate the effective estimate (roughly a 10-sample exponential horizon), so sample ordering and sample count warrant an explicit sweep. This is a plausible calibration-quality contributor, not by itself proof of the observed regressions.
+- Quanto's documentation describes qint8 and low-bit quantization algorithms and calibration. It warns that activation outliers can cause serious error under per-tensor activation quantization, and says optimized matrix-multiply kernels are not implemented for all devices/format combinations. Its documented optimized combinations are specifically CUDA-oriented. Source: https://github.com/huggingface/optimum-quanto
+- Transformers' Quanto integration documents model quantization/loading, but a general device placement API is not proof of an accelerated kernel on every device. Source: https://huggingface.co/docs/transformers/en/quantization/quanto
+- Release notes need to be checked for platform-specific kernel/compiler changes. Quanto 0.2.7 notes Linux-limited CUDA extension compilation, mentions HIP support, and enables XPU tests; these statements do not establish a universal architecture matrix. Sources: https://github.com/huggingface/optimum-quanto/releases/tag/v0.2.6 and https://github.com/huggingface/optimum-quanto/releases/tag/v0.2.7
+
+## Independent runtime reference points
+
+- Bitsandbytes publishes a detailed per-backend installation matrix, including CPU ISA/platform, NVIDIA CUDA, ROCm, Intel XPU, Gaudi, and Apple Silicon/MPS distinctions. Its backend support belongs to bitsandbytes and must not be attributed to Quanto. Source: https://huggingface.co/docs/bitsandbytes/installation
+- GPTQModel documents backend- and format-specific paths, including CPU feature requirements, NVIDIA kernels, select ROCm targets, and native MLX on Apple Silicon. Source: https://github.com/ModelCloud/GPTQModel/wiki/Inference-Backends
+- AutoAWQ is marked deprecated/unmaintained by its repository and documents narrower backend/version requirements. Source: https://github.com/casper-hansen/autoawq
+- TorchAO publishes recipe-specific support matrices and inference benchmarks; a portable quantized tensor format does not guarantee an accelerated operator on all hardware. Source: https://docs.pytorch.org/ao/stable/workflows/inference.html and https://docs.pytorch.org/ao/stable/workflows/index.html
+- llama.cpp has a separate GGUF quantization path and broad backend build matrix; its supports are not interchangeable with Transformers/Quanto quantization support. Sources: https://github.com/ggml-org/llama.cpp/blob/master/tools/quantize/README.md and https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md
+
+## Hypotheses to test, not conclusions
+
+The prior matrix did not include weight-only controls, so it cannot isolate weight quantization from activation quantization. Plausible hypotheses are: a small, short calibration set under-represents activation ranges; per-tensor int8 activation quantization is sensitive to outliers and scaling; qint4 weight rounding compounds activation error; and the ARM64 CPU path lacks a matching optimized kernel, introducing conversion/fallback overhead that overwhelms compressed-weight bandwidth savings. These require separate weight-only/joint controls, larger representative calibration, operator profiling, and warmed-up steady-state timing before assigning causality.

@@ -10,7 +10,6 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-
 TOGGLE = {"id": "tuning.cross_run_diff_auto", "default": True}
 
 

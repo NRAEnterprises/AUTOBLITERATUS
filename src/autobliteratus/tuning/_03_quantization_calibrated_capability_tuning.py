@@ -6,9 +6,8 @@ target quantization scheme for each layer.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.quantization_calibrated_capability", "default": True}
 

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
 TOGGLE = {"id": "tuning.moe_auto", "default": True}
 
 

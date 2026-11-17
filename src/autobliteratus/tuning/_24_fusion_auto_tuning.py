@@ -6,9 +6,8 @@ models are combined.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.fusion_auto", "default": True}
 

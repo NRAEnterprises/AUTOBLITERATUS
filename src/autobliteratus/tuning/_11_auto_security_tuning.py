@@ -5,9 +5,8 @@ Target the specific layers flagged by the security scan.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.auto_security_tuning", "default": True}
 

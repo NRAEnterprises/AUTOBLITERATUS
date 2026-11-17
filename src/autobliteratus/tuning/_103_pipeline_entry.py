@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 TOGGLE = {"id": "tuning.pipeline_entry", "default": True}
 
 
@@ -29,10 +28,21 @@ def run(
     return run_pipeline(
         model_path=model_path,
         work_dir=work_dir,
+        output_dir=kwargs.get("output_dir"),
         quantization=quantization,
         target_frameworks=target_frameworks,
         deployment_target=deployment_target,
         enable=enable,
         disable=disable,
         dry_run=dry_run,
+        ablation_strength=kwargs.get("ablation_strength", 1.0),
+        ablation_component=kwargs.get("ablation_component", "attn.out"),
+        trust_remote_code=kwargs.get("trust_remote_code", False),
+        calibration_data=kwargs.get("calibration_data"),
+        calibration_samples=kwargs.get("calibration_samples", 128),
+        calibration_max_length=kwargs.get("calibration_max_length", 256),
+        calibration_momentum=kwargs.get("calibration_momentum", 0.9),
+        calibration_streamline=kwargs.get("calibration_streamline", True),
+        device=kwargs.get("device", "auto"),
+        dtype=kwargs.get("dtype", "auto"),
     )

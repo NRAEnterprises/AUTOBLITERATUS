@@ -5,9 +5,8 @@ Verify structured outputs and tool schemas still function after ablation.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.tool_call_integrity_auto", "default": True}
 

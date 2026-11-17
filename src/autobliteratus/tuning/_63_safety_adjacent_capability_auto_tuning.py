@@ -6,9 +6,8 @@ contexts) preserved separately from refusal.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.safety_adjacent_capability", "default": True}
 

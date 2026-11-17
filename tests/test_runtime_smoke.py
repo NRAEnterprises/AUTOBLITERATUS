@@ -1,10 +1,10 @@
 from autobliteratus.tuning.runtime_selector import RuntimeSelector
-from autobliteratus.tuning.tuning_orchestrator import TuningOrchestrator
 from autobliteratus.tuning.toggle_registry import TOGGLES
+from autobliteratus.tuning.tuning_orchestrator import TuningOrchestrator
 
 
 def test_imports() -> None:
-    import autobliteratus  # noqa: F401
+    import autobliteratus
     import autobliteratus.tuning  # noqa: F401
 
 

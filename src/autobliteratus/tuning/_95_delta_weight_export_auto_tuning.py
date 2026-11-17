@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 TOGGLE = {"id": "tuning.delta_weight_export_auto", "default": True}
 
 

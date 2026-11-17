@@ -9,9 +9,9 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import ClassVar
 
 import yaml
-
 
 TOGGLE = {"id": "tuning.yaml_config_auto", "default": True}
 
@@ -47,7 +47,7 @@ class AblationPlan:
 
 
 class YamlConfigAutoFigurer:
-    FAMILY_TABLE = {
+    FAMILY_TABLE: ClassVar[dict[str, tuple[str, str]]] = {
         "llama":       ("dense_transformer", "dense"),
         "mistral":     ("dense_transformer", "dense"),
         "qwen2":       ("dense_transformer", "dense"),

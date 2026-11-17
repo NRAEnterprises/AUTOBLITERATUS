@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import torch
-
 
 def linear_cka(a, b):
     if a is None or b is None:

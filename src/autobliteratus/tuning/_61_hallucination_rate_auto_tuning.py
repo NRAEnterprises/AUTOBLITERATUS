@@ -5,9 +5,8 @@ Measure and correct if ablation increased hallucination.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.hallucination_rate_auto", "default": True}
 

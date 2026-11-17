@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import torch
 
+from autobliteratus.core.prompts import REASONING_PROMPTS, load_prompts
 from autobliteratus.core.refusal import measure_refusal_rate
-from autobliteratus.core.prompts import load_prompts, REASONING_PROMPTS
-
 
 AXES = (
     "coherence", "reasoning", "cot_integrity", "structure", "calibration",

@@ -5,9 +5,8 @@ Produce 4-bit and 8-bit exports with calibration verified.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.quantized_export_auto", "default": True}
 

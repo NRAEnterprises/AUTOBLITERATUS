@@ -5,9 +5,8 @@ Verify the refusal direction is not re-emerging over time or across prompts.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.refusal_direction_drift_detection", "default": True}
 

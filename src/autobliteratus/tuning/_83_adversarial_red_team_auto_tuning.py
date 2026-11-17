@@ -6,9 +6,8 @@ behavior.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.adversarial_red_team_auto", "default": True}
 

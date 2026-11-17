@@ -1,0 +1,248 @@
+schema_version: 1
+handoff:
+  project: autobliteratus
+  snapshot: phase-c-memory-throughput-profiling
+  generated_at: '2026-11-16'
+  purpose: >-
+    Token-efficient engineering handoff for the next model: preserve the validated
+    source, tests, evidence, release artifacts, audit notes, and ordered remaining work.
+  current_release_posture: conditional_not_production_qualified
+  current_phase:
+    name: Phase C
+    focus: memory and throughput profiling
+    status: initiated
+    baseline_before_phase_c:
+      active_callable_stages: 19
+      unavailable_prototypes: 80
+    current_after_phase_c_promotion:
+      active_callable_stages: 20
+      unavailable_prototypes: 79
+    promoted_in_phase_c:
+      - id: tuning.batch_size_throughput_auto
+        mode: report_only
+        mutates_model: false
+        optimization_claim: false
+        evidence: tests/test_phase_c_throughput_backend.py
+    existing_related_stages:
+      - tuning.memory_footprint_auto
+      - tuning.latency_auto
+    next_phase_entry_condition: >-
+      Complete resource-budget, OOM-recovery, KV-cache, and hardware-targeted
+      profiling gates before enabling any mutating throughput or deployment optimizer.
+verification:
+  tests:
+    command: PYTHONPATH=src .venv/bin/python -m pytest -q
+    passed: 173
+    skipped: 17
+    failed: 0
+  coverage:
+    command: >-
+      PYTHONPATH=src .venv/bin/python -m pytest -q --cov=src/autobliteratus
+      --cov-report=term-missing --cov-report=xml:coverage-phase-c/coverage.xml
+      --cov-report=html:htmlcov-phase-c
+    project_line_coverage_percent: 34
+    statements: 4816
+    missed_statements: 3185
+    active_stage_report: docs/phase-c-memory-throughput-coverage-2026-11-16.md
+    xml: coverage-phase-c/coverage.xml
+    html: htmlcov-phase-c/index.html
+  lint:
+    command: .venv/bin/ruff check src tests benchmarks
+    status: passed
+  registry:
+    total_switches: 99
+    callable: 20
+    unavailable: 79
+    missing_callable_entrypoints: 0
+    unavailable_switches_fail_closed: true
+  build:
+    wheel: dist/autobliteratus-0.1.0-py3-none-any.whl
+    source_distribution: dist/autobliteratus-0.1.0.tar.gz
+  hardware:
+    architecture: aarch64
+    cpu: available
+    cuda: unavailable
+    mps: unavailable
+    xpu: unavailable
+    hpu: unavailable
+    npu: unavailable
+    accelerate: installed
+    optimum_quanto: unavailable
+    qualification_limit: >-
+      This runner cannot qualify CUDA, x86-64, mobile power, distributed inference,
+      or full Quanto quantization quality.
+completed_work:
+  - callable switch registry and dependency validation
+  - 20 active module-level run(adapter, context) stages
+  - immutable Hugging Face revision propagation and provenance fields
+  - security hardening for promoted compatibility backends
+  - Phase A capability battery promotion
+  - Phase B report-only latency profiling
+  - Phase C report-only batch-size throughput profiling
+  - full test, lint, build, packaging, security, and coverage evidence
+  - executive speaker scripts for audit, security, Phase A, and Phase B
+  - reusable skill: /home/ubuntu/skills/autobliteratus-final-stages-audit
+priority_order:
+  - priority: 1
+    target: active-stage hardening and release gates
+    status: in_progress
+    why: >-
+      The largest immediate release risk is low exercised coverage in model export,
+      calibrated quantization, memory telemetry, provenance, and hardware branches.
+    work:
+      - add deterministic adapter/model fixtures for export and quantization
+      - cover memory RSS fallback and accelerator allocation branches
+      - test provenance hash binding and artifact reload failures
+      - add atomic-write, rollback, cancellation, and failure-redaction tests
+    acceptance: no untested release-critical branch and no silent optional-dependency skip
+  - priority: 2
+    target: Phase C resource-budget profiling
+    status: initiated
+    why: >-
+      Memory and throughput measurements are prerequisites for safe optimization.
+    work:
+      - add OOM recovery and per-candidate timeout/cancellation
+      - correlate host RSS, accelerator allocation, batch size, sequence length, and throughput
+      - add resource ceilings and machine-readable budget violations
+      - preserve before/after quality gates for every selected configuration
+    acceptance: report-only profiler with bounded execution and reproducible budget evidence
+  - priority: 3
+    target: KV-cache and sequence-length profiling
+    status: unavailable_prototype
+    why: >-
+      Cache behavior is the next largest throughput/memory driver for autoregressive inference.
+    work:
+      - profile cache enabled versus disabled
+      - sweep bounded context lengths
+      - measure memory growth and tokens/second
+      - reject cache configurations that change outputs beyond tolerance
+    acceptance: deterministic report plus quality and memory regression gates
+  - priority: 4
+    target: hardware matrix execution
+    status: environment_blocked
+    why: >-
+      CPU ARM64 evidence cannot establish CUDA, x86-64, mobile, distributed, or thermal claims.
+    work:
+      - run pinned benchmark matrix on CUDA and x86-64
+      - add mobile/edge power and thermal runner evidence
+      - record driver, accelerator, framework, and kernel versions
+    acceptance: separate evidence per target, never an inferred pass
+  - priority: 5
+    target: quantization backend qualification
+    status: environment_blocked
+    why: Optimum Quanto is not installed and accelerator paths are unavailable here.
+    work:
+      - install the locked quantization extra in a controlled runner
+      - execute full-precision versus Quanto quality matrix
+      - verify artifact reload, metric finiteness, and revision provenance
+    acceptance: valid comparative rows for each selected model and mode
+  - priority: 6
+    target: deployment and distributed planning
+    status: unavailable_prototype
+    why: Placement, distributed inference, and on-device constraints need measured resource contracts.
+    work:
+      - promote report-only device placement planner
+      - add distributed topology and failure reporting
+      - add mobile/edge package-size and memory ceilings
+    acceptance: plan-only output with explicit unsupported-backend failures
+  - priority: 7
+    target: mutating optimization stages
+    status: blocked_until_gates
+    why: >-
+      Performance, cache, batch, and scheme selectors must not mutate or choose policies
+      without quality, resource, reproducibility, and rollback evidence.
+    work:
+      - implement before/after objective comparison
+      - add rollback checkpoints and artifact manifests
+      - add stop conditions and regression tolerance policy
+    acceptance: measurable improvement with no material quality regression and tested rollback
+known_breakages_and_errors:
+  - issue: Optimum Quanto is unavailable in the current environment
+    impact: calibrated quantization integration tests and full quantization quality rows remain skipped or blocked
+    remedy: install the quantization extra in a controlled compatible runner
+  - issue: accelerator backends are unavailable
+    impact: CUDA, XPU, HPU, NPU, MPS, distributed, mobile, and thermal qualification cannot run here
+    remedy: execute the hardware matrix on target runners
+  - issue: project-wide coverage is 34 percent
+    impact: broad prototype inventory and release-critical optional branches remain lightly exercised
+    remedy: prioritize deterministic fixtures for export, quantization, memory, provenance, and hardware paths
+  - issue: latency and throughput stages are diagnostic only
+    impact: they measure but do not optimize or select deployment policy
+    remedy: retain opt-in report-only behavior until quality and rollback gates exist
+  - issue: 79 switches remain unavailable
+    impact: prototype roadmap is not complete
+    remedy: promote one workstream at a time using the callable contract and evidence gates
+  - issue: active-stage coverage for memory, model export, quantization, provenance, and weight fingerprinting is low
+    impact: these are release-risk areas despite passing tests
+    remedy: add direct contract and failure-path tests before release claims
+recommended_additional_modules:
+  - id: resource_budget_gate
+    purpose: Compare memory, latency, throughput, and quality against configurable budgets.
+    priority: high
+  - id: oom_recovery_and_cancellation
+    purpose: Abort a candidate safely, release resources, and preserve a failed measurement record.
+    priority: high
+  - id: kv_cache_profiler
+    purpose: Measure cache memory growth, context-length sensitivity, and output stability.
+    priority: high
+  - id: hardware_capability_matrix_runner
+    purpose: Execute the same benchmark contract across CPU, CUDA, x86-64, edge, and distributed targets.
+    priority: high
+  - id: benchmark_manifest_and_dataset_lock
+    purpose: Bind model revisions, dataset fingerprints, prompt digests, seeds, and runtime versions.
+    priority: high
+  - id: rollback_checkpoint_manager
+    purpose: Create atomic checkpoints and restore model/export state after failed optimizations.
+    priority: high
+  - id: structured_quality_gate
+    purpose: Enforce metric-specific tolerances for capability, refusal, safety, and output-format behavior.
+    priority: medium
+  - id: observability_exporter
+    purpose: Emit OpenTelemetry-compatible stage timings, resource metrics, and failure categories without raw prompts.
+    priority: medium
+  - id: model_artifact_signing
+    purpose: Sign manifests and bind model/config/state hashes to exported artifacts.
+    priority: medium
+  - id: plugin_api_versioning
+    purpose: Version stage contracts and reject incompatible third-party stage plugins.
+    priority: medium
+  - id: reproducible_container_or_lockfile
+    purpose: Make benchmark and release environments reconstructible across hardware runners.
+    priority: medium
+organization:
+  retained:
+    - src
+    - tests
+    - benchmarks
+    - docs
+    - dist
+    - coverage-phase-c/coverage.xml
+    - speaker scripts
+    - FINAL_AUDIT.md
+    - FINAL_PROJECT_AUDIT_AND_RECOMMENDATIONS.md
+    - reusable audit skill
+    - this manifest
+  excluded_as_dead_weight:
+    - virtual environments
+    - Python bytecode and __pycache__ directories
+    - pytest, Ruff, and coverage caches
+    - duplicate historical migration matrices superseded by current copies
+    - generated HTML coverage bulk; XML and the concise Markdown report are retained
+    - prior delivery archives
+    - temporary logs and scratch scripts
+  rehydration:
+    install: pip install -e '.[dev,benchmark]'
+    test: PYTHONPATH=src python -m pytest -q
+    lint: python -m ruff check src tests benchmarks
+    build: python -m build
+  primary_reading_order:
+    - PROJECT_HANDOFF_MANIFEST.yaml
+    - README.md
+    - FINAL_AUDIT_ADDENDUM_2026-11-16.md
+    - docs/phase-c-memory-throughput-coverage-2026-11-16.md
+    - FINAL_PROJECT_AUDIT_AND_RECOMMENDATIONS.md
+    - docs/remaining-prototype-migration-guide-current.md
+    - docs/remaining-prototype-contract-matrix-current.csv
+    - docs/security-vulnerability-audit-2026-11-16.md
+    - Makefile
+    - pyproject.toml

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import torch
 
-
 REFUSAL_MARKERS = [
     "i can't", "i cannot", "i won't", "i will not",
     "i'm sorry", "i apologize", "i'm not able", "i am not able",

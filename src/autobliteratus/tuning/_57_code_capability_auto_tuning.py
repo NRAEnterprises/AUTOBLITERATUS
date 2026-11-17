@@ -5,9 +5,8 @@ Verify and restore code generation, debugging, and execution accuracy.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.code_capability", "default": True}
 

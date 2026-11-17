@@ -5,9 +5,8 @@ Verify the ablated model resists prompt injection.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.prompt_injection_resistance", "default": True}
 

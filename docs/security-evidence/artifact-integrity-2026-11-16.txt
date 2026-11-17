@@ -1,0 +1,6 @@
+Artifact integrity evidence — 2026-11-16
+autobliteratus-0.1.0-py3-none-any.whl_sha256=370b61b2f9014c2f5f1f8f4950d1fef05354b93300098ecda19a9a054cd0f35e
+autobliteratus-0.1.0.tar.gz_sha256=7adaf74cbd283eefc453dcd4bca0385077d3c4bd4bd72816af16ca7282ff786d
+wheel_record_hash_mismatches=0
+wheel_unsafe_paths=0
+sdist_unsafe_paths_or_links=0

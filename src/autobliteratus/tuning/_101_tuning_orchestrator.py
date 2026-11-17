@@ -6,9 +6,9 @@ Nothing runs unless its toggle is on. Nothing runs before its dependencies.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
-
+from typing import Any
 
 TOGGLE = {"id": "tuning.orchestrator", "default": True}
 
@@ -49,7 +49,7 @@ class TuningOrchestrator:
                 self.run_one(toggle_id, context)
                 completed.add(toggle_id)
                 report.executed.append(toggle_id)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - preserve independent stage outcomes.
                 report.failed.append({"id": toggle_id, "error": str(exc)})
 
         return report

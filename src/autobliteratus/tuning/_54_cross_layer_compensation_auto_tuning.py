@@ -5,9 +5,8 @@ When one layer loses capability, adjacent layers absorb the responsibility.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.cross_layer_compensation", "default": True}
 

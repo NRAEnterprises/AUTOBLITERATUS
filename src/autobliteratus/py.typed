@@ -1,3 +1,0 @@
-# Marker file for PEP 561.
-# This file's presence tells type checkers that the package ships inline types.
-# It is intentionally not empty so it survives tooling that strips empty files.

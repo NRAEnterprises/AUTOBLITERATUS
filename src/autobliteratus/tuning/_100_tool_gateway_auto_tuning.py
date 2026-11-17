@@ -6,9 +6,8 @@ metadata, and structured call integrity remain intact after ablation.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.tool_gateway_auto", "default": True}
 

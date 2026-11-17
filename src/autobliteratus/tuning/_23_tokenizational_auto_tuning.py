@@ -5,9 +5,8 @@ Token distribution, tokenizer alignment, and token-level output behavior.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.tokenizational_auto", "default": True}
 

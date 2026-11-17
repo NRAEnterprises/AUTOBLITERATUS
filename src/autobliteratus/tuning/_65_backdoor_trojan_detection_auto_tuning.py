@@ -5,9 +5,8 @@ Scan for injected behavior that activates on trigger phrases.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.backdoor_trojan_detection", "default": True}
 

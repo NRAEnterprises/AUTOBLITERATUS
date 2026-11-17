@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+
+# Generated model/runtime artifacts
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Node/Vite observatory
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Local environment
+.env
+.env.*
+!.env.example

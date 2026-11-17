@@ -5,10 +5,9 @@ Revert to the last good marker on guarantee failure.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.auto_rollback", "default": True}
 

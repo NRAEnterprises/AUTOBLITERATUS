@@ -7,8 +7,6 @@ formats.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.export_format_auto", "default": True}
 
@@ -31,6 +29,6 @@ class ExportFormatAutoTuning:
             try:
                 path = exporter(model, tokenizer, output_dir)
                 results[fmt] = {"ok": True, "path": str(path)}
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - isolate arbitrary format exporter failures.
                 results[fmt] = {"ok": False, "error": str(e)}
         return ExportReport(per_format=results)

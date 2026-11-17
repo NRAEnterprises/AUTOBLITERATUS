@@ -6,9 +6,8 @@ Correct deficits. Re-measure. Nothing else.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.post_ablation_capability", "default": True}
 

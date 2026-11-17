@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Post-ablation architecture-aware quantization-calibrated capability tuning."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
 dependencies = [
     "torch>=2.0",
     "transformers>=4.40",
@@ -16,12 +16,15 @@ dependencies = [
     "peft>=0.10",
     "safetensors>=0.4",
     "pyyaml>=6.0",
+    "tomli>=2.0; python_version < '3.11'",
     "numpy>=1.24",
     "tqdm>=4.65",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4", "ruff>=0.6", "mypy>=1.11"]
+dev = ["pytest>=7.4", "ruff>=0.6", "mypy>=1.11", "build>=1.2"]
+quantization = ["torch>=2.6", "optimum-quanto>=0.2.7", "ninja>=1.11"]
+benchmark = ["datasets>=3.0"]
 
 [project.scripts]
 autobliteratus = "autobliteratus.__main__:main"

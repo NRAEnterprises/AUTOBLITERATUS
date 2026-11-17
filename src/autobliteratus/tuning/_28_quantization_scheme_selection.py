@@ -6,9 +6,8 @@ activations best preserve the full-precision activations.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.quantization_scheme_selection", "default": True}
 

@@ -5,9 +5,8 @@ Ablation can shift bias profiles. Measure and correct.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.bias_stereotype_drift_auto", "default": True}
 

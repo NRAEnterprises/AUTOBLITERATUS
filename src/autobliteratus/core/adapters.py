@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from autobliteratus.core.loader import load_model, ModelHandle
-from autobliteratus.core.probe import ActivationProbe, ActivationSet
-from autobliteratus.core.directions import compute_refusal_directions
-from autobliteratus.core.projection import project_out
-from autobliteratus.core.capability import measure_capability, AXES
-from autobliteratus.core.refusal import measure_refusal_rate
+from autobliteratus.core.capability import AXES, measure_capability
 from autobliteratus.core.cka import linear_cka
-from autobliteratus.core.prompts import load_prompts
+from autobliteratus.core.directions import compute_refusal_directions
+from autobliteratus.core.loader import load_model
 from autobliteratus.core.modules import LayerModuleAccess
+from autobliteratus.core.probe import ActivationProbe
+from autobliteratus.core.projection import project_out
+from autobliteratus.core.prompts import load_prompts
+from autobliteratus.core.refusal import measure_refusal_rate
 
 
 class TuningAdapter:
@@ -20,8 +20,27 @@ class TuningAdapter:
         self._probe_cache = {}
 
     @classmethod
-    def from_path(cls, model_path, device="auto", dtype="auto"):
-        handle = load_model(model_path, device=device, dtype=dtype)
+    def from_path(
+        cls,
+        model_path,
+        device="auto",
+        dtype="auto",
+        trust_remote_code=False,
+        device_map=None,
+        max_memory=None,
+        offload_folder=None,
+        revision=None,
+    ):
+        handle = load_model(
+            model_path,
+            device=device,
+            dtype=dtype,
+            trust_remote_code=trust_remote_code,
+            device_map=device_map,
+            max_memory=max_memory,
+            offload_folder=offload_folder,
+            revision=revision,
+        )
         return cls(handle)
 
     def probe(self, prompts):

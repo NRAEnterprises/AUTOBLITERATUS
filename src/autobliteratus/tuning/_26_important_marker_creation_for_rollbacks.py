@@ -5,10 +5,9 @@ Write checkpoints at every pipeline stage boundary.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.marker_creation", "default": True}
 

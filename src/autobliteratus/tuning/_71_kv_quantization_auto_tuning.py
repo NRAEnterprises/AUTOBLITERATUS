@@ -6,9 +6,8 @@ retention.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.kv_quantization_auto", "default": True}
 

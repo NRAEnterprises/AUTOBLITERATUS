@@ -5,9 +5,8 @@ Verify the ablated model is not trivially jailbroken by adversarial prompts.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.jailbreak_resistance_auto", "default": True}
 

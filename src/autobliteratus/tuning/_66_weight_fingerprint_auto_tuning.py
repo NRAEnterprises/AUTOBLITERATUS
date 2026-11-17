@@ -10,8 +10,11 @@ import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
-
-TOGGLE = {"id": "tuning.weight_fingerprint_auto", "default": True}
+TOGGLE = {
+    "id": "tuning.weight_fingerprint_auto",
+    "default": False,
+    "desc": "Compute a bounded-memory SHA-256 fingerprint of the final model state for provenance.",
+}
 
 
 @dataclass
@@ -43,3 +46,14 @@ class WeightFingerprintAutoTuning:
         if not expected.exists():
             return False
         return expected.read_text() == self.compute(model, stage).digest
+
+
+def run(adapter, context):
+    from autobliteratus.tuning._88_provenance_recording_auto_tuning import (
+        fingerprint_model,
+    )
+
+    digest, tensor_count = fingerprint_model(adapter.handle.model)
+    report = {"sha256": digest, "tensor_count": tensor_count, "stage": "final-pre-export"}
+    context["weight_fingerprint"] = report
+    return report

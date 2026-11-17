@@ -1,16 +1,10 @@
-"""Tuning package exports for the runtime registry, selector, and orchestrator."""
+"""AUTOBLITERATUS: post-ablation architecture-aware quantization-calibrated
+capability tuning for local and remote language models."""
 
 from __future__ import annotations
 
-from autobliteratus.tuning.dispatch import build_registry
-from autobliteratus.tuning.runtime_selector import RuntimeSelector
-from autobliteratus.tuning.toggle_registry import TOGGLES, enabled_toggles
-from autobliteratus.tuning.tuning_orchestrator import TuningOrchestrator
+__version__ = "0.1.0"
+__author__ = "AUTOBLITERATUS contributors"
+__license__ = "MIT"
 
-__all__ = [
-    "TOGGLES",
-    "enabled_toggles",
-    "RuntimeSelector",
-    "TuningOrchestrator",
-    "build_registry",
-]
+__all__ = ["__author__", "__license__", "__version__"]

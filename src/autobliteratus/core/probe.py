@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 
 import torch
 
+from autobliteratus.core.modules import LayerModuleAccess
+
 
 @dataclass
 class ActivationSet:
@@ -35,16 +37,14 @@ class ActivationProbe:
     def _resolve_layers(self):
         if self._layers is not None:
             return self._layers
-        m = self.model
-        if hasattr(m, "model") and hasattr(m.model, "layers"):
-            self._layers = m.model.layers
-        elif hasattr(m, "transformer") and hasattr(m.transformer, "h"):
-            self._layers = m.transformer.h
-        elif hasattr(m, "layers"):
-            self._layers = m.layers
-        else:
-            self._layers = []
+        self._layers = LayerModuleAccess(self.handle)._layers
         return self._layers
+
+    def _input_device(self):
+        embedding = self.model.get_input_embeddings()
+        if embedding is not None:
+            return embedding.weight.device
+        return next(self.model.parameters()).device
 
     def collect(self, prompts, max_length=256):
         layers = self._resolve_layers()
@@ -71,7 +71,7 @@ class ActivationProbe:
                     return_tensors="pt",
                     truncation=True,
                     max_length=max_length,
-                ).to(self.model.device)
+                ).to(self._input_device())
                 with torch.no_grad():
                     self.model(**inputs)
                 for i in range(num_layers):

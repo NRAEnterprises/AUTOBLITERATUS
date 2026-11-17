@@ -5,9 +5,8 @@ Verify the ablated model meets user-defined compliance rules.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.compliance_checking_auto", "default": True}
 

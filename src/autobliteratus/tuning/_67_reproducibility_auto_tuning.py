@@ -1,72 +1,56 @@
-"""Tuning type 67: reproducibility auto tuning.
-
-Record seeds, RNG state, and environment so the same ablation can be
-reproduced byte-for-byte.
-"""
+"""Record execution environment details for reproducible artifact comparisons."""
 
 from __future__ import annotations
 
-import json
+import importlib.metadata
 import os
-import random
-from dataclasses import dataclass, field
-from pathlib import Path
+import platform
+import sys
+from typing import Any
+
+TOGGLE = {
+    "id": "tuning.reproducibility_auto",
+    "default": False,
+    "desc": "Record package/runtime/device and deterministic-algorithm settings; does not set seeds or promise bitwise reproducibility.",
+}
 
 
-TOGGLE = {"id": "tuning.reproducibility_auto", "default": True}
+def _version(name: str) -> str | None:
+    try:
+        return importlib.metadata.version(name)
+    except importlib.metadata.PackageNotFoundError:
+        return None
 
 
-@dataclass
-class ReproducibilityRecord:
-    seeds: dict = field(default_factory=dict)
-    env: dict = field(default_factory=dict)
+def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
+    import torch
 
-
-class ReproducibilityAutoTuning:
-    def __init__(self, work_dir: str = "./reproducibility", enabled: bool = True) -> None:
-        self.work_dir = Path(work_dir)
-        self.work_dir.mkdir(parents=True, exist_ok=True)
-        self.enabled = enabled
-
-    def capture(self) -> ReproducibilityRecord:
-        if not self.enabled:
-            return ReproducibilityRecord()
-        seeds = {
-            "python": random.getstate()[1][0],
-            "numpy": self._numpy_seed(),
-            "torch": self._torch_seed(),
-        }
-        env = {k: v for k, v in os.environ.items() if k.startswith(("CUDA", "TORCH", "PYTHON"))}
-        record = ReproducibilityRecord(seeds=seeds, env=env)
-        (self.work_dir / "record.json").write_text(json.dumps(
-            {"seeds": seeds, "env": env}, indent=2))
-        return record
-
-    def restore(self, record: ReproducibilityRecord) -> None:
-        if not self.enabled:
-            return
-        random.seed(record.seeds.get("python", 0))
-        try:
-            import numpy as np
-            np.random.seed(record.seeds.get("numpy", 0))
-        except ImportError:
-            pass
-        try:
-            import torch
-            torch.manual_seed(record.seeds.get("torch", 0))
-        except ImportError:
-            pass
-
-    def _numpy_seed(self) -> int:
-        try:
-            import numpy as np
-            return int(np.random.get_state()[1][0])
-        except ImportError:
-            return 0
-
-    def _torch_seed(self) -> int:
-        try:
-            import torch
-            return int(torch.initial_seed())
-        except ImportError:
-            return 0
+    model = adapter.handle.model
+    config = getattr(model, "config", None)
+    deterministic = bool(torch.are_deterministic_algorithms_enabled())
+    runtime = {
+        "python": sys.version.split()[0],
+        "platform": platform.platform(),
+        "machine": platform.machine(),
+        "processor": platform.processor() or None,
+        "packages": {
+            name: _version(name)
+            for name in ("torch", "transformers", "optimum-quanto", "safetensors", "accelerate")
+        },
+        "selected_device": context.get("device", "auto"),
+        "loaded_device_summary": getattr(adapter.handle, "device", None),
+        "dtype": context.get("dtype", "auto"),
+        "architecture": getattr(config, "model_type", None),
+        "model_config_class": type(config).__name__ if config is not None else None,
+        "deterministic_algorithms_enabled": deterministic,
+        "random_seed": None,
+        "bitwise_reproducibility_claimed": False,
+        "environment": {
+            key: value
+            for key, value in os.environ.items()
+            if key.startswith(("CUDA", "HIP", "TORCH", "PYTORCH", "CUBLAS", "CUDNN", "NCCL", "OMP", "MKL"))
+        },
+    }
+    report = {"runtime": runtime}
+    context["reproducibility_report"] = report
+    return report

@@ -10,7 +10,6 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-
 TOGGLE = {"id": "tuning.telemetry_and_threshold_auto", "default": True}
 
 

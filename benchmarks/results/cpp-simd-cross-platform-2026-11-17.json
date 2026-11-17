@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "host_architecture": "aarch64",
+  "native_compiler_target": "aarch64-linux-gnu",
+  "requested_architecture": "x86_64",
+  "status": "blocked_no_cross_compiler_or_emulator",
+  "available_tools": {
+    "x86_64-linux-gnu-g++": null,
+    "clang++": null,
+    "qemu-x86_64": null
+  },
+  "probe_returncode": 1,
+  "probe_stderr": "g++: error: unrecognized command-line option \u2018-mavx2\u2019",
+  "equivalence_claim": "not_run",
+  "reason": "Host is AArch64; x86_64 cross compiler, Clang, and qemu-x86_64 are unavailable."
+}

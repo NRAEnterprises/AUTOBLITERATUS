@@ -6,9 +6,8 @@ ablation.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.positional_encoding_auto", "default": True}
 

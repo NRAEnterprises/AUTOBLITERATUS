@@ -6,9 +6,9 @@ by the detected model family.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
+from typing import ClassVar
 
 TOGGLE = {"id": "tuning.architecture_aware_capability", "default": True}
 
@@ -33,7 +33,7 @@ class TuningReport:
 
 
 class ArchitectureAwareCapabilityTuning:
-    FAMILY_PATHS = {
+    FAMILY_PATHS: ClassVar[dict[str, tuple[str, tuple[str, ...]]]] = {
         "dense_transformer":          ("peak_band",           ("attn.out", "mlp.down")),
         "moe_sparse":                 ("per_expert_peak",     ("attn.out", "moe.expert")),
         "moe_shared_routed":          ("per_expert_peak",     ("attn.out", "moe.shared", "moe.routed")),

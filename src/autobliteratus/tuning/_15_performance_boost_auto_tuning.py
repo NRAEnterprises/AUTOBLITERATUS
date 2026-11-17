@@ -6,9 +6,8 @@ optimizations that preserve the ablation and the restored capabilities.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.performance_boost_auto", "default": True}
 

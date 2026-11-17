@@ -6,9 +6,8 @@ model's outputs and feeds corrections back into the tuning loop.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Callable
-
+from collections.abc import Callable
+from dataclasses import dataclass
 
 TOGGLE = {"id": "tuning.m2m_optimizational_auto", "default": True}
 

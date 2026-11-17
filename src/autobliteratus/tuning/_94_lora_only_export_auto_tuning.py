@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 TOGGLE = {"id": "tuning.lora_only_export_auto", "default": True}
 
 

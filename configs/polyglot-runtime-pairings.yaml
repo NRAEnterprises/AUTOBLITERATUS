@@ -1,0 +1,108 @@
+schema_version: 1
+project: AUTOBLITERATUS
+policy:
+  core_runtime_language: python
+  integration_mode: sidecar_or_versioned_extension
+  direct_in_process_foreign_code: forbidden_by_default
+  runtime_mutation_from_polyglot_backend: forbidden
+  discovery_backend_must_be_sandboxed: true
+  backend_must_emit_machine_readable_failures: true
+  backend_must_bind_model_identity: true
+  backend_must_pass_contract_tests_before_enablement: true
+  default_activation: disabled
+
+pairings:
+  - id: elixir_rust_supervised_orchestration
+    languages: [elixir, rust]
+    responsibility: supervised orchestration and fault containment
+    boundary: Elixir supervisor process plus Rust sidecar via ports or gRPC
+    interchange: protobuf_or_versioned_json
+    avoid: Rust NIFs in the BEAM for untrusted or long-running model work
+    status: environment_blocked
+    promotion_gates: [toolchain_lock, crash_restart_test, timeout_test, backpressure_test, artifact_provenance]
+
+  - id: python_mojo_reasoning_numeric
+    languages: [python, mojo]
+    responsibility: reasoning control flow with numerical acceleration kernels
+    boundary: Python stage owns prompts, evidence, and policy; Mojo owns pure bounded kernels
+    interchange: typed_tensor_contract
+    avoid: allowing Mojo kernels to mutate model state or bypass Python quality gates
+    status: environment_blocked
+    promotion_gates: [numerical_equivalence, overflow_test, determinism_test, memory_budget_test, cpu_fallback_test]
+
+  - id: go_typescript_routing_protocol
+    languages: [go, typescript]
+    responsibility: routing, protocol gateways, and control-plane adapters
+    boundary: Go service owns bounded routing; TypeScript owns schema-facing integration
+    interchange: protobuf_or_openapi
+    avoid: model-weight access from the routing layer
+    status: environment_blocked
+    promotion_gates: [schema_compatibility, malformed_message_test, auth_boundary_test, rate_limit_test, replay_test]
+
+  - id: julia_cuda_statistical_calibration
+    languages: [julia, cuda]
+    responsibility: statistical calibration and accelerator-side numeric experiments
+    boundary: sandbox-only calibration worker; Python consumes signed result artifacts
+    interchange: parquet_or_arrow_with_manifest
+    avoid: treating one GPU or driver result as universal evidence
+    status: environment_blocked
+    promotion_gates: [seed_replay, cpu_reference_match, device_metadata, precision_sweep, resource_budget_gate]
+
+  - id: prolog_mercury_formal_logic
+    languages: [prolog, mercury]
+    responsibility: formal constraints, rule validation, and explainable planning
+    boundary: pure query service with bounded depth and result cardinality
+    interchange: canonical_json_facts_and_proofs
+    avoid: arbitrary goal execution from model-generated input
+    status: environment_blocked
+    promotion_gates: [termination_bound, proof_replay, injection_test, result_cardinality_limit, timeout_test]
+
+  - id: rust_tokio_distributed_coordination
+    languages: [rust, tokio]
+    responsibility: distributed coordination, leases, cancellation, and worker health
+    boundary: Rust/Tokio coordinator has no model-weight write access
+    interchange: protobuf_with_run_ids
+    avoid: distributed mutation without a signed checkpoint and rollback token
+    status: environment_blocked
+    promotion_gates: [partition_test, duplicate_delivery_test, cancellation_test, lease_expiry_test, rollback_test]
+
+  - id: cpp_simd_signal_processing
+    languages: [cpp, simd]
+    responsibility: signal preprocessing, tensor packing, and benchmark kernels
+    boundary: versioned native extension or isolated worker with immutable input buffers
+    interchange: pinned_binary_buffer_contract
+    avoid: ABI drift, unchecked pointer arithmetic, and silent precision changes
+    status: prototype_equivalence_passed_aarch64_g++_not_promoted
+    evidence: docs/cpp-simd-backend-contract-2026-11-17.md
+    performance_evidence: benchmarks/results/cpp-simd-performance-2026-11-17.json
+    cross_platform_evidence: benchmarks/results/cpp-simd-cross-platform-2026-11-17.json
+    promotion_gates: [sanitizer_run, scalar_equivalence, alignment_test, overflow_test, architecture_matrix]
+
+  - id: ocaml_menhir_grammar_reasoning
+    languages: [ocaml, menhir]
+    responsibility: grammar parsing and structured-plan validation
+    boundary: pure parser service; parser output is schema-validated by Python
+    interchange: canonical_json_ast
+    avoid: executing parsed plans without Python policy validation
+    status: environment_blocked
+    promotion_gates: [grammar_coverage, malformed_input_test, ambiguity_test, resource_bound_test, ast_schema_test]
+
+  - id: racket_lisp_meta_reflection
+    languages: [racket, lisp]
+    responsibility: controlled meta-reflection and experiment-plan generation
+    boundary: discovery-only plan generator; generated plans require Python approval
+    interchange: signed_experiment_plan_json
+    avoid: self-modifying runtime code and unrestricted filesystem or network access
+    status: environment_blocked
+    promotion_gates: [sandbox_test, plan_schema_test, capability_allowlist, recursion_bound, reproducibility_test]
+
+promotion_flow:
+  - design_backend_contract
+  - build_sidecar_or_extension_in_dedicated_workspace
+  - run_backend_contract_tests
+  - run_cpu_reference_or_formal_equivalence_tests
+  - run_sandbox_discovery_battery
+  - bind_results_to_model_and_toolchain_fingerprints
+  - pass_resource_quality_reproducibility_and_rollback_gates
+  - enable_explicitly_for_named_pipeline
+  - never_enable_globally_by_language_presence

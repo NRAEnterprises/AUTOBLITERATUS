@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import torch
-
 
 def compute_refusal_directions(harmful, harmless):
     directions = {}

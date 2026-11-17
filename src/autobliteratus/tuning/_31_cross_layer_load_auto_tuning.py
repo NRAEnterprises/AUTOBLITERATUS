@@ -5,9 +5,8 @@ Redistribute projection load across adjacent layers.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
-
 
 TOGGLE = {"id": "tuning.cross_layer_load_auto", "default": True}
 

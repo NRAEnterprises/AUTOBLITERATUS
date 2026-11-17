@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
 TOGGLE = {"id": "tuning.merge_compatibility_auto", "default": True}
 
 
