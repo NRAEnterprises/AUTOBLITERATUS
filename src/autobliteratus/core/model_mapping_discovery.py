@@ -277,14 +277,25 @@ def update_database(path: str | os.PathLike[str], discovery_report: dict[str, An
         except (OSError, json.JSONDecodeError) as exc:
             raise ValueError(f"Mapping database is not valid JSON: {destination}") from exc
     else:
-        database = {"schema_version": 1, "models": {}}
+        database = {"schema_version": 1, "models": {}, "dynamic_mappings": {}}
     if not isinstance(database, dict) or not isinstance(database.get("models", {}), dict):
         raise TypeError("Mapping database must contain an object-valued models field.")
+    if "dynamic_mappings" not in database:
+        database["dynamic_mappings"] = {}
+    if not isinstance(database["dynamic_mappings"], dict):
+        raise TypeError("Mapping database dynamic_mappings must be an object.")
     identity = discovery_report["model_identity"]["identity_sha256"]
     history = database["models"].setdefault(identity, [])
     if not isinstance(history, list):
         raise TypeError("Mapping database model history must be a list.")
     history.append(discovery_report)
+    battery = discovery_report.get("unknown_factor_battery")
+    if isinstance(battery, dict):
+        from autobliteratus.core.discovery_experiment_pipeline import (
+            merge_dynamic_mapping_updates,
+        )
+
+        merge_dynamic_mapping_updates(database, battery)
     fd, temporary = tempfile.mkstemp(prefix=f".{destination.name}.", dir=str(destination.parent), text=True)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as stream:

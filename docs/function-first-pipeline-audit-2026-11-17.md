@@ -155,3 +155,9 @@ The first function-priority safety increment is now implemented on top of this a
 - The implementation is covered by dedicated firewall, rollback, atomic-publication, and topology-tamper tests.
 
 Post-change validation: **248 passed, 17 skipped**, Ruff clean, package build successful. The safety work reduces accidental mutation risk but does not yet replace the separate baseline/regression/resource-budget promotion gates; those remain required for the next hardening increment.
+
+## Priority 2 implementation follow-up
+
+The sandbox discovery pipeline now includes a bounded unknown-factor experiment battery. It performs isolated removal probes, restores the live model after every probe, records verified/unknown/failed outcomes, enforces experiment and wall-clock bounds, and atomically stores only verified promotions under a separate `dynamic_mappings` database section. User labels are excluded from promotion evidence. A sandbox-bound adapter remains mandatory, and the runtime pipeline does not consume the dynamic database automatically.
+
+The transaction integration suite now also injects a simulated downstream quality-gate failure and verifies exact fingerprint restoration plus a durable rolled-back checkpoint manifest. Post-change validation: **255 passed, 17 skipped**, Ruff clean.

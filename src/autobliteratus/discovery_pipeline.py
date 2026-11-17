@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 from typing import Any
 
+from autobliteratus.core.discovery_experiment_pipeline import run_unknown_factor_battery
 from autobliteratus.core.model_mapping_discovery import discover, update_database
 
 PIPELINE_ID = "model_mapping_discovery_sandbox"
@@ -59,6 +60,7 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
     discovery_context = dict(context)
     discovery_context["model_mapping_db_path"] = database_path
     report = discover(adapter, discovery_context)
+    report["unknown_factor_battery"] = run_unknown_factor_battery(adapter, report, discovery_context)
     update_database(database_path, report)
     report.update(
         {

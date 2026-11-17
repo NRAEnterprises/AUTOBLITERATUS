@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -36,6 +37,31 @@ def test_discovery_pipeline_keeps_database_inside_sandbox(tmp_path) -> None:
     assert report["model_modified"] is False
     assert database_path.exists()
     assert json.loads(database_path.read_text(encoding="utf-8"))["schema_version"] == 1
+
+
+def test_discovery_pipeline_persists_verified_dynamic_mapping(tmp_path) -> None:
+    adapter = make_kv_cache_fixture_adapter()
+    adapter.handle.model.config = SimpleNamespace(model_type="llama")
+    adapter.sandboxed = True
+    adapter.sandbox_root = tmp_path
+    adapter.sandbox_removal_probe = lambda *args: {
+        "removal_supported": True,
+        "quality_preserved": True,
+    }
+
+    report = run(
+        adapter,
+        {
+            "sandbox": True,
+            "sandbox_root": tmp_path,
+            "unknown_factor_candidates": {"attention": ["anchor"]},
+        },
+    )
+
+    database = json.loads((tmp_path / "model-mappings.json").read_text(encoding="utf-8"))
+    identity = report["model_identity"]["identity_sha256"]
+    assert report["unknown_factor_battery"]["verified_factor_count"] == 1
+    assert database["dynamic_mappings"][identity][0]["path"] == "anchor"
 
 
 def test_discovery_pipeline_rejects_an_unbound_adapter(tmp_path) -> None:
