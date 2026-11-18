@@ -4,7 +4,7 @@ Date: 2026-11-16
 
 ## Executive status
 
-The active core is functionally stable: the complete suite passes with **156 passed and 17 skipped**, the package builds, the CLI lists all 99 registry records, and the active graph has 15 callable stages. The release posture remains **experimental engineering build only**, not general-production release.
+The active core is functionally stable: the complete suite passes with **255 passed and 17 skipped**, the package builds, the CLI lists all 100 registry records, and the active graph has 22 callable stages. The release posture remains **experimental engineering build only**, not general-production release. Mutating execution is now fail-closed behind explicit authorization, transactional rollback, and a promoted mapping capability.
 
 No full runtime breakage was found in the tested active paths. The highest-risk issues are coverage and qualification gaps, not a current failing default path.
 
@@ -24,7 +24,7 @@ No full runtime breakage was found in the tested active paths. The highest-risk 
 
 ### Full breakage points to address first
 
-1. **Repository-wide lint gate is broken.** `lint-all` exits non-zero with 177 findings even though the focused active gate passes. This blocks a clean enterprise CI release unless the gate is scoped intentionally or the legacy tree is cleaned.
+1. **Repository-wide lint gate is now clean for the canonical tree.** `lint-all` covers `src`, `tests`, and `benchmarks`; legacy root-level duplicate scripts have been removed rather than linted as a second source tree.
 2. **Coverage can give a false sense of safety.** Existing tests did not import memory telemetry or weight fingerprinting, so an initial focused coverage invocation collected no data. Direct contract probes were required. Add tests that import every promoted stage.
 3. **Prototype modules contain class methods but no callable stage contract.** They must remain unavailable; importing or instantiating them is not implementation evidence.
 4. **Hardware paths are largely unqualified.** CUDA, ROCm, MPS, XPU, HPU, NPU, multi-GPU, and distributed inference paths are not evidenced on this CPU/ARM64 environment.
@@ -52,7 +52,7 @@ No full runtime breakage was found in the tested active paths. The highest-risk 
 
 ## Unactivated switch portfolio
 
-The 84 unavailable switches are backed by a static inventory and visible in the CLI, but not yet by measurable runtime tools. They are grouped in `docs/84-unavailable-prototypes-roadmap.md` into evaluation/quality, architecture/surgery, performance/deployment, training/adapters, export/governance, and adversarial/orchestration workstreams.
+The 78 unavailable switches are backed by a static inventory and visible in the CLI, but not yet by measurable runtime tools. The sandbox discovery and runtime mapping-promotion gates are operational; they do not promote unavailable tuning stages.
 
 For each switch, the required measurable promotion evidence is: a module-level `run(adapter, context)`, stable report schema, deterministic tiny fixture, negative test, pipeline handoff test, artifact/checksum contract where applicable, and documented coverage threshold.
 
@@ -99,7 +99,7 @@ Priority first promotions should be narrow compatibility and consistency checks 
 
 24. Raise memory telemetry coverage above 85% with mocked CUDA/MPS/allocation-error branches.
 25. Bind fingerprints to parameter name, shape, dtype, tensor count, source identity, stage order, and run ID.
-26. Use atomic writes for fingerprint files and a signed or checksum-bound manifest.
+27. Use atomic writes for fingerprint files and a signed or checksum-bound manifest. The current mapping capability uses a deterministic schema signature and digest; asymmetric signing remains a release hardening item.
 27. Add changed-weight negative tests and missing-fingerprint behavior tests.
 28. Add bounded-memory profiling on representative large checkpoints.
 29. Add artifact garbage-collection and failed-run cleanup tests.

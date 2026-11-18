@@ -47,6 +47,16 @@ def test_mutation_firewall_is_fail_closed() -> None:
         require_mutation_authorized("tuning.refusal_direction_ablation", {})
 
 
+def test_mutation_firewall_requires_promoted_mapping_capability() -> None:
+    context = {
+        "allow_mutation": True,
+        "mutation_gate": {"status": "armed"},
+        "mutation_transaction": SimpleNamespace(active=True),
+    }
+    with pytest.raises(MutationAuthorizationError, match="promoted mapping capability"):
+        require_mutation_authorized("tuning.refusal_direction_ablation", context)
+
+
 def test_transaction_rolls_back_exact_model_state(tmp_path: Path) -> None:
     model = torch.nn.Linear(2, 2, bias=False)
     before = copy.deepcopy(model.state_dict())

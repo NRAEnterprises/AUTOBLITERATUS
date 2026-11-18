@@ -10,7 +10,7 @@ The result is a **quality/performance warning, not a release pass**. On this ARM
 
 ## Compared checkpoints and measured results
 
-The tested checkpoints were [SmolLM2-135M-Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct), [SmolLM2-360M-Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct), and [Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct). Revisions are pinned in the [manifest](./manifest.json) and [raw JSONL](./results.jsonl).
+The tested checkpoints were [SmolLM2-135M-Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct), [SmolLM2-360M-Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct), and [Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct). The historical manifest and raw benchmark artifacts are intentionally not tracked in the cleaned repository.
 
 | Model | Mode | Loadable checkpoint MiB | WikiText-2 PPL (× baseline) | TruthfulQA-MC correct / 12 | GSM8K exact / 4 | Generation tok/s | Refusal markers / 4 |
 |---|---|---:|---:|---:|---:|---:|---:|
@@ -24,7 +24,7 @@ The tested checkpoints were [SmolLM2-135M-Instruct](https://huggingface.co/Huggi
 | Qwen2.5-0.5B-Instruct | Quanto int8 | 873.0 | 209.61 (6.37×) | 3/12 | 0/4 | 2.49 | 0/4 |
 | Qwen2.5-0.5B-Instruct | Quanto int4 | 722.6 | 321.77 (9.77×) | 5/12 | 0/4 | 2.89 | 0/4 |
 
-Checkpoint sizes count only loadable model weights plus essential tokenizer/config/quantization metadata. Baseline size was recalculated from the model snapshot to exclude unrelated ONNX exports, training logs, and repository assets; quantized size is the published exported model directory. The [CSV](./results.csv) and [JSONL](./results.jsonl) contain the measured values and per-run metadata.
+Checkpoint sizes count only loadable model weights plus essential tokenizer/config/quantization metadata. Baseline size was recalculated from the model snapshot to exclude unrelated ONNX exports, training logs, and repository assets; quantized size is the published exported model directory. Per-run CSV/JSONL artifacts were retained outside this source repository.
 
 ## Interpretation and adverse-effect checks
 
@@ -36,7 +36,7 @@ TruthfulQA-MC was a **12-question** sample. Its results varied in both direction
 
 ## Method and reproducibility
 
-- **Hardware/software:** Linux ARM64 (`aarch64`), 6 CPU threads, no CUDA device available; PyTorch 2.15.0, Transformers 5.23.0, Optimum Quanto 0.2.7, Datasets 5.2.0. Exact details and dataset fingerprints are in [`manifest.json`](./manifest.json).
+- **Hardware/software:** Linux ARM64 (`aarch64`), 6 CPU threads, no CUDA device available; PyTorch 2.15.0, Transformers 5.23.0, Optimum Quanto 0.2.7, Datasets 5.2.0. Exact details were recorded in the historical run manifest, which is not tracked here.
 - **Model loading:** Hugging Face snapshots were pinned to their resolved commit revisions. Baselines were loaded in float32 on CPU. Quantized runs used the same model/tokenizer snapshot, the central pipeline, a separate export path, and a fresh Quanto reload before evaluation.
 - **Quantization:** Quanto qint8 or qint4 weights plus qint8 activations. Activation scales used the configured moving-average calibration (momentum 0.9). The calibration text was 16 seeded samples from the WikiText-2 training split, truncated to 128 tokens; evaluation used a separate WikiText-2 test sample. Calibration used the same fixed corpus across models, not application-specific production prompts.
 - **Evaluation:** 16 WikiText-2 test texts (maximum 128 tokens each), 12 seeded TruthfulQA-MC validation questions, 4 seeded GSM8K test questions, and 4 bundled harmful prompts for the refusal-marker heuristic. Sampled tasks, seeds, and fingerprints are recorded in the manifest; calibration corpus SHA-256 is recorded in the JSONL.

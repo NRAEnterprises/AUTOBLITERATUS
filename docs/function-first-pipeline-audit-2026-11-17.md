@@ -65,7 +65,7 @@ The mapping registry is complete as a **category inventory**, not as a complete 
 
 ### Current status
 
-The synchronized test suite has 27 test files, with 242 passing tests and 17 skips in the current environment. Coverage includes runtime registry contracts, discovery isolation, mapping completeness, KV-cache profiling, memory/throughput failure paths, export hardening, baseline/regression gates, provenance/fingerprint behavior, quantization compatibility, and C++ SIMD equivalence.
+The synchronized test suite has 30 test files, with 260 passing tests and 17 skips in the current environment. Coverage includes runtime registry contracts, discovery isolation, mapping completeness, KV-cache profiling, memory/throughput failure paths, export hardening, baseline/regression gates, provenance/fingerprint behavior, quantization compatibility, C++ SIMD equivalence, transactional rollback, and replayable mapping promotion.
 
 The 17 skips are not proof of failure; they represent environment-dependent or unavailable paths. The handoff records that project-wide coverage was previously approximately 34%, accelerator backends are unavailable in the present runner, and Optimum Quanto/hardware matrix evidence is environment-blocked. Those constraints must remain explicit in release reporting.
 
@@ -93,30 +93,30 @@ The runtime pipeline has several solid safety components:
 
 ### Critical gaps
 
-1. **Mutation is enabled before mandatory quality gates.** `tuning.refusal_direction_ablation` is default-on and directly calls `adapter.project`, which mutates model weights. `tuning.baseline_auto_pre_post` and `tuning.benchmark_regression_auto` are default-off. The pipeline therefore does not require a baseline/regression gate for an ordinary modifying run.
-2. **Rollback is not integrated.** The marker and auto-rollback implementations are class prototypes without callable module-level `run` stages; the registry reports them unavailable. The runtime has no two-phase mutation transaction that snapshots before edit, validates after edit, and restores on any downstream failure.
-3. **Mutation authorization is not mapping-bound.** The ablation stage accepts a component and layer directions from the adapter but does not require a verified model mapping/discovery record, topology fingerprint, or per-area evidence record.
+1. **Quality-gate completion remains required.** Mutating stages are now opt-in and fail closed without explicit authorization, a transaction, and a promoted mapping capability. Baseline/regression/resource evidence is still not automatically synthesized for every possible modifying configuration; Priority 3 provides the mapping capability contract, not a general quality policy.
+2. **Transactional rollback is implemented for the current mutation boundary.** `MutationTransaction` snapshots state, publishes checkpoints atomically, restores on pipeline failure, and verifies exact fingerprints. The older marker and auto-rollback prototype modules remain unavailable and are not represented as production stages.
+3. **Mapping authorization is now evidence-bound.** The firewall requires a schema- and digest-validated promoted capability record whose model identity, replay results, measurement signatures, and regression report have passed validation.
 4. **Quantization is not transaction-safe.** `_97_calibrated_quantization.py` mutates/wraps the in-memory model before all downstream export and final quality checks complete. A later failure can leave the process with a modified in-memory model even though no artifact is published.
 5. **Delta export is a stub.** Both delta export modules return a path but do not compute, serialize, validate, or fingerprint an actual delta artifact. It must not be treated as a completed modification pipeline.
-6. **Failure handling can leave partial in-memory changes.** The orchestrator records failures and continues independent stages. That is useful for diagnostics, but a modifying run needs a transaction coordinator that stops mutation/export work after a mutation failure and performs rollback before reporting.
+6. **Failure handling remains mixed by design.** The orchestrator records independent diagnostic failures, while a modifying run now has a transaction coordinator that rolls back after mutation/export failure. Additional callable mutation stages must still adopt this boundary before promotion.
 7. **Artifact manifests are not signatures.** SHA-256 checksums and provenance are useful integrity evidence, but there is no signing key, signed checkpoint, rollback token, or trust-root verification for downstream acceptance.
-8. **Topology is not part of the runtime contract.** The observatory can export proposals, but runtime modification code does not ingest or enforce those proposals. Visual selection is therefore neither dangerous nor useful to mutation until a dedicated validated bridge exists.
+8. **Topology ingestion is validated but remains non-authorizing.** The observatory proposal importer validates identity, graph, and safety fields, but visual selection cannot authorize mutation. A promoted mapping capability and independent runtime quality gates remain mandatory.
 
 ## 5. Function-first build priorities
 
-### Priority 0 — Mutation firewall and release stop condition
+### Priority 0 — Mutation firewall and release stop condition — complete
 
-Make all mutating runtime stages opt-in and fail closed unless the caller explicitly requests a named mutation pipeline. Require a pre-edit fingerprint, explicit model revision, verified mapping evidence, baseline evaluation, resource budget, regression gate, and rollback capability before any weight mutation. A modifying run must stop on the first mutation failure and must not export after a failed gate.
+All currently callable mutating runtime stages are opt-in and fail closed unless the caller explicitly requests a named mutation pipeline. The runtime requires explicit authorization, a pre-edit transaction fingerprint, verified mapping capability, and rollback before mutation. Full cross-domain quality/resource coordination remains a later gate.
 
-### Priority 1 — Transactional checkpoint and rollback manager
+### Priority 1 — Transactional checkpoint and rollback manager — implemented for current boundary
 
-Promote real callable checkpoint/rollback stages. Snapshot model/config/tokenizer state before each mutation boundary, bind the checkpoint to model/config/toolchain/device fingerprints, restore on quality/resource/export failure, and prove exact restoration with tests. Add rollback tokens and atomic publish semantics.
+The current pipeline snapshots model state before mutation, binds the checkpoint to identity and fingerprints, restores on pipeline failure, and publishes checkpoint state atomically. The older marker/auto-rollback prototype stages remain unavailable; rollback tokens and trust-root signing remain future work.
 
-### Priority 2 — Quality/resource gate coordinator
+### Priority 2 — Quality/resource gate coordinator — partially complete
 
-Unify baseline, capability, safety, regression, latency, throughput, memory, KV-cache, and resource-budget evidence into one required gate result. Require finite metrics, explicit tolerances, reproducibility metadata, and a machine-readable rejection record before export.
+The runtime has separate machine-readable baseline, regression, latency, throughput, memory, KV-cache, and resource-budget reports. A single required coordinator covering all evidence classes before export remains the next functional target.
 
-### Priority 3 — Complete modification artifacts
+### Priority 3 — Replayable mapping promotion and complete modification artifacts — mapping gate complete
 
 Implement real delta-weight computation/export, artifact reload tests, manifest schema/signing, and post-publish verification. Ensure quantization and ablation produce a complete before/after record and cannot leave a usable artifact after failed validation.
 

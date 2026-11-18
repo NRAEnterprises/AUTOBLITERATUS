@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 import time
 from typing import Any
 
@@ -16,6 +17,11 @@ class DiscoveryExperimentError(ValueError):
 
 def _experiment_id(identity: str, category: str, path: str) -> str:
     payload = f"{identity}:{category}:{path}".encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _measurement_signature(measurement: dict[str, Any]) -> str:
+    payload = json.dumps(measurement, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -119,6 +125,7 @@ def run_unknown_factor_battery(
                             for key, value in raw.items()
                             if key not in {"user_label", "label", "promotion"}
                         }
+                        observation["measurement_signature"] = _measurement_signature(observation["measurement"])
                         if observation["removal_supported"] and observation["quality_preserved"]:
                             observation["status"] = "verified"
                             promotions.append(
@@ -128,6 +135,7 @@ def run_unknown_factor_battery(
                                     "path": path,
                                     "status": "verified",
                                     "evidence": "isolated_removal_probe_and_quality_check",
+                                    "measurement_signature": observation["measurement_signature"],
                                 }
                             )
                         else:

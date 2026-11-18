@@ -19,7 +19,7 @@ This list is an evaluation matrix, not an exhaustive claim that every listed pla
 
 ## Accelerate placement and sharded artifacts
 
-Model loading supports Transformers/Accelerate device-map strategies `auto`, `balanced`, `balanced_low_0`, and `sequential`, with repeatable per-device memory limits and an optional offload folder. This enables layer placement across multiple available devices when the model/backend combination supports it. Export sharding is separately controlled by `--max-shard-size`; it does not change load-time placement. See [`run-plans-and-sharding.md`](../docs/run-plans-and-sharding.md) for config and CLI examples. Record the resolved `hf_device_map`, backend versions, memory budgets, and offload settings for each multi-device run, then validate conversion, inference, and exported reload. No multi-GPU or accelerator result should be inferred from CPU-only tests.
+Model loading supports Transformers/Accelerate device-map strategies `auto`, `balanced`, `balanced_low_0`, and `sequential`, with repeatable per-device memory limits and an optional offload folder. This enables layer placement across multiple available devices when the model/backend combination supports it. Export sharding is separately controlled by `--max-shard-size`; it does not change load-time placement. See [`Run plans, acceleration, and sharded artifacts`](Run%20plans%2C%20acceleration%2C%20and%20sharded%20artifacts.md) for config and CLI examples. Record the resolved `hf_device_map`, backend versions, memory budgets, and offload settings for each multi-device run, then validate conversion, inference, and exported reload. No multi-GPU or accelerator result should be inferred from CPU-only tests.
 
 ## Model/family and quantization coverage
 

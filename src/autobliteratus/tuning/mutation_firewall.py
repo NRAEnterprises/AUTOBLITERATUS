@@ -37,6 +37,21 @@ def require_mutation_authorized(stage_id: str, context: dict[str, Any]) -> None:
         raise MutationAuthorizationError(
             f"{stage_id} requires an active transactional checkpoint; no mutation was applied."
         )
+    capability = context.get("mapping_capability")
+    if not isinstance(capability, dict) or capability.get("status") != "promoted":
+        raise MutationAuthorizationError(
+            f"{stage_id} requires a promoted mapping capability; no mutation was applied."
+        )
+    try:
+        from autobliteratus.tuning.mapping_promotion_gate import (
+            validate_mapping_capability,
+        )
+
+        validate_mapping_capability(capability, context.get("mapping_expected_identity"))
+    except (ImportError, ValueError) as exc:
+        raise MutationAuthorizationError(
+            f"{stage_id} received an invalid mapping capability; no mutation was applied."
+        ) from exc
     proposal = context.get("topology_proposal_report")
     if proposal is not None and proposal.get("validated") is not True:
         raise MutationAuthorizationError(

@@ -1,22 +1,22 @@
 schema_version: 1
 handoff:
   project: autobliteratus
-  snapshot: phase-c-memory-throughput-profiling
-  generated_at: '2026-11-16'
+  snapshot: priority-3-runtime-mapping-promotion-gate
+  generated_at: '2026-11-17'
   purpose: >-
     Token-efficient engineering handoff for the next model: preserve the validated
     source, tests, evidence, release artifacts, audit notes, and ordered remaining work.
   current_release_posture: conditional_not_production_qualified
   current_phase:
-    name: Phase C
-    focus: memory and throughput profiling
-    status: initiated
+    name: Priority 3 runtime promotion hardening
+    focus: replayable mapping capability promotion and regression-bound mutation authorization
+    status: implemented_and_validated
     baseline_before_phase_c:
-      active_callable_stages: 19
+      active_callable_stages: 20
       unavailable_prototypes: 80
     current_after_phase_c_promotion:
-      active_callable_stages: 20
-      unavailable_prototypes: 79
+      active_callable_stages: 22
+      unavailable_prototypes: 78
     promoted_in_phase_c:
       - id: tuning.batch_size_throughput_auto
         mode: report_only
@@ -31,8 +31,8 @@ handoff:
       profiling gates before enabling any mutating throughput or deployment optimizer.
 verification:
   tests:
-    command: PYTHONPATH=src .venv/bin/python -m pytest -q
-    passed: 173
+    command: PYTHONPATH=src python -m pytest -q
+    passed: 261
     skipped: 17
     failed: 0
   coverage:
@@ -47,17 +47,17 @@ verification:
     xml: coverage-phase-c/coverage.xml
     html: htmlcov-phase-c/index.html
   lint:
-    command: .venv/bin/ruff check src tests benchmarks
+    command: python -m ruff check src tests benchmarks
     status: passed
   registry:
-    total_switches: 99
-    callable: 20
-    unavailable: 79
+    total_switches: 100
+    callable: 22
+    unavailable: 78
     missing_callable_entrypoints: 0
     unavailable_switches_fail_closed: true
   build:
-    wheel: dist/autobliteratus-0.1.0-py3-none-any.whl
-    source_distribution: dist/autobliteratus-0.1.0.tar.gz
+    wheel: generated locally by `python -m build` and intentionally not tracked
+    source_distribution: generated locally by `python -m build` and intentionally not tracked
   hardware:
     architecture: aarch64
     cpu: available
@@ -80,6 +80,10 @@ completed_work:
   - Phase B report-only latency profiling
   - Phase C report-only batch-size throughput profiling
   - full test, lint, build, packaging, security, and coverage evidence
+  - mutation firewall with explicit authorization and transactional rollback
+  - sandbox unknown-factor experiment battery with dynamic mapping evidence
+  - runtime mapping promotion gate with replayability, schema signature, and regression validation
+  - repository cleanup removing legacy root-level duplicate scripts and generated model/workspace artifacts
   - executive speaker scripts for audit, security, Phase A, and Phase B
   - reusable skill: /home/ubuntu/skills/autobliteratus-final-stages-audit
 priority_order:
@@ -156,6 +160,18 @@ priority_order:
       - add rollback checkpoints and artifact manifests
       - add stop conditions and regression tolerance policy
     acceptance: measurable improvement with no material quality regression and tested rollback
+  - priority: 8
+    target: runtime mapping promotion gate
+    status: complete
+    why: >-
+      Discovery evidence must not authorize mutation until replayability, schema integrity,
+      model identity, and regression evidence are independently validated.
+    work:
+      - validate deterministic experiment IDs and measurement signatures
+      - require replay results with matching signatures
+      - require finite passed regression metrics and no listed regressions
+      - issue a versioned capability record consumed by the mutation firewall
+    acceptance: promoted capability validates by schema signature and digest and rejects tampering
 known_breakages_and_errors:
   - issue: Optimum Quanto is unavailable in the current environment
     impact: calibrated quantization integration tests and full quantization quality rows remain skipped or blocked
@@ -169,7 +185,7 @@ known_breakages_and_errors:
   - issue: latency and throughput stages are diagnostic only
     impact: they measure but do not optimize or select deployment policy
     remedy: retain opt-in report-only behavior until quality and rollback gates exist
-  - issue: 79 switches remain unavailable
+  - issue: 78 switches remain unavailable
     impact: prototype roadmap is not complete
     remedy: promote one workstream at a time using the callable contract and evidence gates
   - issue: active-stage coverage for memory, model export, quantization, provenance, and weight fingerprinting is low
@@ -215,14 +231,14 @@ organization:
     - tests
     - benchmarks
     - docs
-    - dist
-    - coverage-phase-c/coverage.xml
-    - speaker scripts
-    - FINAL_AUDIT.md
+    - benchmark result evidence
+    - current audit and handoff documents
     - FINAL_PROJECT_AUDIT_AND_RECOMMENDATIONS.md
-    - reusable audit skill
     - this manifest
   excluded_as_dead_weight:
+    - legacy root-level duplicate prototype scripts; canonical code is under src/autobliteratus
+    - tracked model checkpoints and generated ablation workspaces
+    - generated fingerprints, provenance, reproducibility, and cross-run scratch directories
     - virtual environments
     - Python bytecode and __pycache__ directories
     - pytest, Ruff, and coverage caches

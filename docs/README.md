@@ -24,10 +24,9 @@ AUTOBLITERATUS is meant to coordinate many tuning strategies behind a single exe
 
 ## Status
 
-The package contains 99 tuning-toggle records. Fifteen have callable pipeline entrypoints; 84 named research modules remain unavailable prototypes. The CLI lists each status and rejects requests for unavailable stages before loading a model. Operational stages include live architecture inspection, refusal-direction ablation, optional Quanto quantization, numeric parameter scanning, read-only MoE routing diagnostics, Pareto ranking of caller-supplied candidate scores, pre-edit causal-LM evaluation baselines, a direction-aware post-edit quality/forward-throughput regression gate, prompt-redacted run-audit artifacts, optional fingerprint/provenance/reproducibility/memory/model-card reports, and separate validated Transformers export. The routing stage does not rebalance experts; the numeric scan is not malware/backdoor detection; and Pareto selection does not generate or evaluate candidates. The new evaluation gate is a limited language-modeling/forward-throughput check, not a hallucination, reasoning, safety, or deployment guarantee. Runtime and memory reports are observational; reproducibility reporting does not set random seeds or promise bitwise determinism. Do not interpret a prototype's name or class file as evidence its feature is operational.
+The package contains 100 tuning-toggle records. Twenty-two have callable pipeline entrypoints; 78 named research modules remain unavailable prototypes. The CLI lists each status and rejects unavailable stages before loading a model. Mutating stages require explicit authorization, a transactional checkpoint, a promoted mapping capability, and validated export. The sandbox discovery pipeline is separate and records bounded evidence without authorizing runtime mutation. Do not interpret a prototype's name or class file as evidence its feature is operational.
 
-For status against the supplied implementation phases and a conservative release-readiness assessment, see [`docs/implementation-status.md`](docs/implementation-status.md).
-The opt-in diagnostic, evaluation-gate, and audit-stage contracts are documented in [`docs/advanced-stages.md`](docs/advanced-stages.md). The implementation record for the latest three promoted stages and the full 84-entry remaining-prototype inventory are in [`docs/next-prototype-batch-2026-11-16.md`](docs/next-prototype-batch-2026-11-16.md) and [`docs/remaining-prototype-inventory-2026-11-16.csv`](docs/remaining-prototype-inventory-2026-11-16.csv).
+For current status and release-readiness, see [`function-first-pipeline-audit-2026-11-17.md`](function-first-pipeline-audit-2026-11-17.md). Discovery and runtime promotion contracts are documented in [`automated-discovery-and-dynamic-mapping.md`](automated-discovery-and-dynamic-mapping.md) and [`runtime-mapping-promotion-gate.md`](runtime-mapping-promotion-gate.md).
 
 ## Requirements
 
@@ -41,7 +40,7 @@ The opt-in diagnostic, evaluation-gate, and audit-stage contracts are documented
 - NumPy 1.24+
 - tqdm 4.65+
 
-The complete dependency list is maintained in [`pyproject.toml`](pyproject.toml).
+The complete dependency list is maintained in [`pyproject.toml`](../pyproject.toml).
 Use a virtual environment; calibrated quantization requires PyTorch 2.6+ and
 Optimum Quanto, and the benchmark extra adds Hugging Face Datasets:
 
@@ -79,19 +78,16 @@ List available tuning toggles:
 autobliteratus --list-toggles
 ```
 
-Run the pipeline on a model. By default, the package estimates refusal
-directions, applies an attention-output projection to the in-memory model, and
-writes a separately validated Transformers model under
-`./abliterate_workspace/modified_model`:
+Run an inspection or diagnostic pipeline on a model. Mutating stages are disabled
+by default:
 
 ```bash
-autobliteratus --model-path /path/to/model --work-dir ./abliterate_workspace
+autobliteratus --model-path /path/to/model --work-dir ./abliterate_workspace --dry-run
 ```
 
-This ablation intentionally changes refusal-related behavior and may weaken
-safety safeguards. Use only models you are authorized to modify, isolate the
-result, and independently evaluate safety and target-task quality before any
-use; successful export is not approval for deployment.
+To authorize a modifying run, pass `--allow-mutation` and provide the required
+promoted mapping capability, transactional checkpoint, regression evidence, and
+validated export inputs. Successful export is not approval for deployment.
 
 Choose a different output location or projection target:
 
@@ -183,7 +179,7 @@ keep the model revisions, seed, datasets, and sample counts identical.
 Use repeated `--calibration-momentum 0 --calibration-momentum 0.9 --calibration-momentum 1`
 to compare Quanto's EMA endpoints and default; `--calibration-no-streamline`
 is an additional diagnostic control. These options do not replace representative
-calibration data. See [`benchmarks/hardware-matrix.md`](benchmarks/hardware-matrix.md)
+calibration data. See [`docs/hardware-matrix.md`](hardware-matrix.md)
 for the device/model matrix and per-platform caveats.
 
 Enable or disable specific tuning modules:
@@ -201,8 +197,8 @@ inspector reports observed structure and does not assert backend support. The
 exporter records the deployment-profile metadata but does not claim profile-
 specific optimization has occurred.
 
-At this repository revision, 12 of 99 registered tuning toggles have callable
-pipeline stages; the other 87 are deliberately unavailable and are not
+At this repository revision, 22 of 100 registered tuning toggles have callable
+pipeline stages; the other 78 are deliberately unavailable and are not
 production implementations. This is a remaining release blocker for any
 workflow that depends on those capabilities; their names are not evidence that
 the behavior has been implemented.
@@ -216,7 +212,7 @@ autobliteratus --model-path /path/to/model --dry-run
 You can also invoke the package directly:
 
 ```bash
-python -m autobliteratus --model-path /path/to/model --work-dir ./abliterate_workspace
+python -m autobliteratus --model-path /path/to/model --work-dir ./abliterate_workspace --dry-run
 ```
 
 ## CLI overview
@@ -250,8 +246,7 @@ Key options include:
 - `--dry-run` - validate configuration without running the full pipeline
 - `--trust-remote-code` - opt in to executing custom model-repository Python code (off by default)
 
-See [`docs/run-plans-and-sharding.md`](docs/run-plans-and-sharding.md) and the
-[`example YAML run plan`](configs/run-plan.example.yaml) for precedence, safety,
+See [`Run plans, acceleration, and sharded artifacts`](Run%20plans%2C%20acceleration%2C%20and%20sharded%20artifacts.md) for precedence, safety,
 multi-device placement, and sharded export details. Placement/sharding controls
 are implemented but are not a claim of tested acceleration on every backend;
 the current development host is ARM64 CPU-only.
@@ -260,14 +255,12 @@ the current development host is ARM64 CPU-only.
 
 - `src/autobliteratus/` - package source code
 - `pyproject.toml` - project metadata and Python package configuration
-- `archive/root-prototypes-2026-11-16/` - preserved root-level experimental modules; not imported or packaged as active features
+- `src/autobliteratus/` - canonical package source; legacy root-level duplicates are intentionally absent
 - `Makefile` - repeatable install, test, lint, benchmark-help, and build targets
-- `testing/TESTING_LOG.md` and `testing/results.csv` - append-only test and benchmark ledger
-- `docs/run-plans-and-sharding.md` - config, plan-only, Accelerate, offload, and sharded export guide
+- `docs/` - audits, handoff records, safety contracts, and historical evidence
 - `README.md` - project overview and usage
 - `LICENSE` - MIT license
-- `abliterate_workspace/` - working directory for generated artifacts and reports
-- `provenance/` and `reproducibility/` - output and tracking directories
+- `benchmarks/results/` - retained benchmark evidence; generated model/runtime outputs are not tracked
 - `tests/` - test coverage area
 
 ## Tests
@@ -282,9 +275,8 @@ python -m pytest tests/test_quantization_integration.py -q
 
 Equivalent repeatable build targets are available through `make test-core`,
 `make test-quantization`, `make test`, `make build`, and `make benchmark-help`.
-Append every new test or benchmark result—including failed, invalid, and
-not-run cases—to [`testing/results.csv`](testing/results.csv), following the
-rules in [`testing/TESTING_LOG.md`](testing/TESTING_LOG.md).
+Record new validation results in the relevant dated audit or handoff report;
+generated model/runtime artifacts and scratch ledgers are not tracked.
 
 The quantization integration suite uses tiny random Llama-, Mistral-, Qwen2-,
 and GPT-2-shaped models plus weight-only controls. A separate structural test
@@ -320,4 +312,4 @@ memory; the package writes the resulting model to the separate output path.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](../LICENSE) file for details.

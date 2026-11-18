@@ -1,6 +1,6 @@
 # Implementation status against `ablation_expansion_notes_01.yaml`
 
-This matrix is intentionally conservative: a callable stage, a successful load, or a tiny-model plumbing test is not treated as proof of production-quality capability. The append-only result history is in [`testing/TESTING_LOG.md`](../testing/TESTING_LOG.md) and [`testing/results.csv`](../testing/results.csv).
+This dated matrix is intentionally conservative and retained for historical evidence. Current release status is maintained in `docs/function-first-pipeline-audit-2026-11-17.md` and `PROJECT_HANDOFF_MANIFEST.yaml`.
 
 | Notes phase | Status | Current evidence and remaining work |
 |---|---|---|
@@ -15,11 +15,11 @@ This matrix is intentionally conservative: a callable stage, a successful load, 
 | Phase 4.2: architecture adapters | **Partial** | Discovery/layout tests cover Llama, Mistral, Qwen2, GPT-2, OPT, GPT-NeoX, and BLOOM. Model loading is restricted to the supported causal text path; multimodal/encoder-decoder models are explicitly rejected. Quantization support varies by backend and module type (for example, GPT-2 Conv1D weight quantization fails closed). MoE and hybrid editing paths are not yet validated. |
 | Phase 4.3: training/update workflows | **Not started** | No retraining, fine-tuning, or adapter-training workflow is claimed. |
 | Phase 4.4: artifact forms | **Partial** | Validated full-model exports and optional summary/model-card output exist. LoRA-only and delta-weight exports remain unavailable prototypes, not supported deliverables. |
-| Phase 4.5: feature inventory | **Partial** | The CLI registry and README report availability and limitations. At this snapshot, 15 of 99 registered stages are callable and 84 remain disabled prototypes. Callable opt-in stages now include MoE routing diagnostics, Pareto selection over pre-scored candidates, numeric parameter anomaly checks, paired evaluation/regression gating, and run auditing. The legacy root-level modules have been preserved under `archive/root-prototypes-2026-11-16/`; they have not been silently migrated into the active package. |
+| Phase 4.5: feature inventory | **Partial** | The current CLI registry reports 100 stages: 22 callable and 78 unavailable prototypes. Callable opt-in stages include diagnostics, paired evaluation/regression gating, sandbox discovery, and runtime promotion support. Legacy root-level duplicate scripts were removed; `src/autobliteratus/` is the canonical package source. |
 
 ## Current release decision
 
-**Not release-ready for general production use.** The stable core can load, modify, validate, and export supported causal Transformer models, with run plans, opt-in Accelerate placement, sharded exports, a bounded language-modeling regression gate, and run audit artifacts. Remaining blockers include the 84 unavailable stages, incomplete model-inspection and safety/capability acceptance, backend-specific quantization coverage, and absent hardware evidence beyond the ARM64 CPU host. The 1.5B ARM64 comparison confirms that smaller int8/int4 checkpoints did not translate to faster CPU generation in that sample and int4 had a substantial PPL penalty; do not treat quantization as an automatic performance win.
+**Not release-ready for general production use.** The stable core can load, inspect, validate, and export supported causal Transformer models, with fail-closed mutation authorization, transactional rollback, sandbox discovery, replayable mapping promotion, a bounded regression gate, and run audit artifacts. Remaining blockers include 78 unavailable stages, incomplete broad capability acceptance, backend-specific quantization coverage, and absent hardware evidence beyond the ARM64 CPU host. The 1.5B ARM64 comparison remains historical evidence; do not treat quantization as an automatic performance win.
 
 ## Next controlled increments
 

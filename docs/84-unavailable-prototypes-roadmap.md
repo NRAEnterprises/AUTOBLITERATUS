@@ -1,6 +1,8 @@
-# Detailed breakdown and implementation roadmap: 84 unavailable prototype switches
+# Historical prototype roadmap: unavailable switch inventory
 
-Generated from `docs/remaining-prototype-inventory-2026-11-16.csv` and the active toggle registry. The source CSV contains 87 historical prototype rows; three are now callable, leaving exactly 84 unavailable switches.
+> This is a dated historical roadmap. The current registry has 100 total toggles, 22 callable stages, and 78 unavailable prototypes. Use `docs/function-first-pipeline-audit-2026-11-17.md` and `PROJECT_HANDOFF_MANIFEST.yaml` for current status.
+
+Generated from the 2026-11-16 inventory and historical registry snapshot. It is retained for traceability and is not a current release checklist.
 
 ## Roadmap sequencing
 

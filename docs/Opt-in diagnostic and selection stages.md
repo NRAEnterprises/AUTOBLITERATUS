@@ -49,7 +49,7 @@ stage_options:
 
 If any valid metric exceeds its tolerance, the stage records its comparison and fails the pipeline; the export stage is skipped. Baseline capture and regression execution are opt-in to avoid additional model passes by default.
 
-The repository includes [`configs/evaluation-gate.example.yaml`](../configs/evaluation-gate.example.yaml). Preview its ordering and validation without downloading model weights with `PYTHONPATH=src python -m autobliteratus --config configs/evaluation-gate.example.yaml --plan-only`.
+Preview a local evaluation-gate YAML plan’s ordering and validation without downloading model weights with `PYTHONPATH=src python -m autobliteratus --config <path-to-plan.yaml> --plan-only`.
 
 ## Run audit
 

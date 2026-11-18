@@ -176,6 +176,8 @@ def run_pipeline(
         "topology_proposal_path",
         "topology_sandbox_root",
         "topology_expected_identity",
+        "mapping_capability",
+        "mapping_expected_identity",
     }
     if stage_options is not None and not isinstance(stage_options, dict):
         raise TypeError("stage_options must be a mapping of supported stage option names to values.")

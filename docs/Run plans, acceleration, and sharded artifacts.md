@@ -10,7 +10,7 @@ autobliteratus --config configs/run-plan.example.yaml --plan-only
 
 `--plan-only` validates the configuration and dependency graph, lists planned/skipped/unavailable stages, resolves the output target, and exits before model weights are loaded. It is distinct from `--dry-run`, which loads and inspects the model while suppressing modifications and export. A plan containing a requested prototype is reported as unsuccessful with that stage under `unavailable`; regular execution remains fail-closed.
 
-Config keys correspond to CLI destinations such as `model_path`, `output_dir`, `quantization`, `enable`, `disable`, `device_map`, `max_memory`, and `max_shard_size`. See [`configs/run-plan.example.yaml`](../configs/run-plan.example.yaml). `trust_remote_code` remains false by default; set it only for a model whose code you have reviewed.
+Config keys correspond to CLI destinations such as `model_path`, `output_dir`, `quantization`, `enable`, `disable`, `device_map`, `max_memory`, and `max_shard_size`. `trust_remote_code` remains false by default; set it only for a model whose code you have reviewed.
 
 ## Acceleration and placement
 
@@ -47,6 +47,6 @@ make build
 make install-dev
 ```
 
-The output includes a SHA-256 checksum map for files present before the manifest is written, runtime/package information, device-map/memory settings, and the configured shard size. Check `testing/TESTING_LOG.md` and append one new row to `testing/results.csv` for every test or benchmark run. Keep `failed`, `invalid`, and `not-run` outcomes; do not replace them with later successful runs.
+The output includes a SHA-256 checksum map for files present before the manifest is written, runtime/package information, device-map/memory settings, and the configured shard size. This dated guide is retained for historical evidence; current validation results belong in the relevant dated audit or handoff report. Keep `failed`, `invalid`, and `not-run` outcomes when recording evidence; do not replace them with later successful runs.
 
 The current development host is ARM64 CPU-only. CPU config/plan logic and tiny model sharding/reload are covered with tests, but actual multi-GPU, CUDA, ROCm, MPS, XPU, HPU, and NPU placement/offload are not claimed as tested here. Those targets need paired end-to-end runs and log entries on compatible hardware before being advertised as validated.

@@ -48,7 +48,7 @@ The registry must remain statically discoverable without importing optional prot
 - Unavailable switches must remain visible in `--list-toggles` and be labeled `[prototype: unavailable]`.
 - Enabling an unavailable switch must raise a deterministic `ValueError` before model loading.
 - No dependency edge may reference an unavailable prototype in the active execution graph.
-- Registry audit must assert: 99 total records, 15 callable stages, and 84 unavailable prototypes until the next promotion is explicitly reviewed.
+- Historical baseline only: the original Phase A registry audit asserted 99 total records, 15 callable stages, and 84 unavailable prototypes. The current registry count is maintained in `PROJECT_HANDOFF_MANIFEST.yaml` and must be measured rather than copied from this dated contract.
 
 ## 3. Dependency and orchestration contract
 
