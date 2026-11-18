@@ -1,10 +1,15 @@
 # AUTOBLITERATUS
 
-AUTOBLITERATUS is an experimental Python toolkit for automated model ablation, capability tuning, quantization-aware optimization, and evaluation. It is designed to help organize and run repeated model-tuning workflows with configurable toggles, architecture awareness, rollback markers, and provenance tracking.
+AUTOBLITERATUS is an experimental Python toolkit for model ablation, evaluation, and quantization workflows. The installable application is the `autobliteratus` package under `src/autobliteratus/`; root-level Python scripts are preserved legacy/prototype files and are not the active packaged runtime.
 
-The project supports a staged tuning pipeline for models that need systematic evaluation and optimization across capability, efficiency, and safety dimensions.
+## Source of truth
 
-## What it does
+- **Current repository layout and status rules:** [docs/REPOSITORY_STATE.md](docs/REPOSITORY_STATE.md)
+- **Implementation status:** [docs/implementation-status.md](docs/implementation-status.md)
+- **Pipeline and optional stages:** [docs/advanced-stages.md](docs/advanced-stages.md)
+- **Run plans, placement, and sharded exports:** [docs/run-plans-and-sharding.md](docs/run-plans-and-sharding.md)
+- **Hardware evaluation matrix:** [benchmarks/hardware-matrix.md](benchmarks/hardware-matrix.md)
+- **Dated audit and benchmark evidence:** [docs/](docs/)
 
 AUTOBLITERATUS is meant to coordinate many tuning strategies behind a single execution model, including:
 
@@ -60,24 +65,27 @@ error when the caller wrapped forward inference in `torch.inference_mode()`;
 use `torch.no_grad()` and validate this behavior again on the exact PyTorch and
 Quanto versions used in deployment.
 
+Registry counts are generated from the active package using `python scripts/audit_repository_state.py`. Counts printed in older dated reports are historical. A callable module-level entry point indicates registry availability only; it is not proof of production qualification or hardware support.
+
 ## Installation
 
-Clone the repository and install it in editable mode:
+Python 3.10+ is required. Install the project and development tools with:
 
 ```bash
-git clone https://github.com/NRAEnterprises/AUTOBLITERATUS.git
-cd AUTOBLITERATUS
-python -m pip install -e .
+python -m pip install -e '.[dev,quantization,benchmark]'
 ```
 
-## Quick Start
+The quantization extra uses optional backend dependencies; availability and support depend on the exact model, PyTorch/Quanto versions, and hardware. See [pyproject.toml](pyproject.toml).
 
-List available tuning toggles:
+## Quick start
+
+List the currently discovered toggles:
 
 ```bash
 autobliteratus --list-toggles
 ```
 
+<<<<<<< HEAD
 Run an inspection or diagnostic pipeline on a model. Mutating stages are disabled
 by default:
 
@@ -91,22 +99,19 @@ mapping capability through the runtime integration. Successful export is not
 approval for deployment.
 
 Choose a different output location or projection target:
+=======
+Run against a model you are authorized to modify, using a distinct output directory:
+>>>>>>> origin/main
 
 ```bash
 autobliteratus --model-path /path/to/model \
-  --output-dir /path/to/new-model-copy \
-  --ablation-component mlp.down --ablation-strength 0.8
+  --work-dir ./abliterate_workspace \
+  --output-dir ./model-copy
 ```
 
-The output directory must not exist. The exporter writes into a temporary
-sibling directory, verifies that the saved configuration and tokenizer load,
-and checks Safetensors tensor names, shapes, values, and required-key coverage
-against the in-memory model before publishing the directory with a rename. The
-source model directory is never used as an output location; overlapping paths
-are rejected. Existing output directories are never overwritten.
+Ablation intentionally changes model behavior and can weaken safety safeguards. Evaluate the resulting model independently; a successful export is not a deployment approval or a quality/safety guarantee. The source model should remain separate from the output.
 
-Run calibrated activation quantization using representative text (plain text,
-JSONL rows with a `text` or `prompt` field, or a JSON list):
+Preview an example run plan without loading model weights:
 
 Quantization is mutation-capable. The example below describes the quantization
 inputs, but a modifying invocation must also pass `--allow-mutation`, explicitly
@@ -114,59 +119,19 @@ enable validated export, and supply a promoted mapping capability to the runtime
 pipeline.
 
 ```bash
-autobliteratus --model-path /path/to/model \
-  --quantization quanto-int4 \
-  --calibration-data /path/to/representative-text.jsonl \
-  --calibration-samples 128 \
-  --calibration-max-length 256 \
-  --output-dir /path/to/new-quantized-model
+autobliteratus --config configs/run-plan.example.yaml --plan-only
 ```
 
-`quanto-int4` and `quanto-int8` quantize backend-supported linear weights and
-calibrate int8 activation ranges from the supplied corpus. The corpus itself is
-not copied to the output; its SHA-256 and calibration settings are recorded in
-the export manifest. The language-model output head is excluded by default.
-Each text row currently forms one Quanto calibration update, so the moving-
-average momentum and row order can influence measured activation scales. Test
-representative data with deployment-like inputs and review saved calibration
-settings rather than treating defaults as universal.
-`quanto-int4-weight-only` and `quanto-int8-weight-only` omit activation
-quantization and require no calibration corpus. These modes help separate
-weight-quantization effects from activation-calibration effects, but are not
-supported for every model module type. Before reporting success, the pipeline
-checks the backend map contains at least one quantized weight and that its bit
-type matches the requested mode; a model with only activation-map entries is
-rejected. In the tested Quanto release, GPT-2 `Conv1D` weights are not covered
-by the supported weight conversion, so its requested weight quantization fails
-closed rather than silently producing an activation-only artifact.
-
-Reload exported Quanto models with the package compatibility loader:
-
-```python
-from autobliteratus.quantization_compat import load_quantized_model
-
-model = load_quantized_model("/path/to/new-quantized-model", device="cpu")
-```
-
-This checks the checkpoint against the instantiated architecture and reconciles
-legacy GPT-NeoX output-head tensor names that Quanto 0.2.7 can otherwise ignore
-silently when loading with newer Transformers releases. The benchmark runner
-and integration tests use this same loader. For architectures that tie the
-output head to input embeddings, the loader also accepts an omitted duplicate
-head tensor only when the config declares tying, the saved embedding tensor is
-present with an exact shape match, and the output head is unquantized; other
-missing or unexpected keys still fail closed.
-
-Run a paired hardware-local benchmark over four model families and six sizes
-by default (Pythia 70M, SmolLM2 135M/360M, GPT-2 124M, and Qwen2.5 0.5B/1.5B):
+## Project checks
 
 ```bash
-python benchmarks/quantization_quality_matrix.py \
-  --output-dir ./benchmark-results/arm64-run \
-  --seed 2026 \
-  --device auto
+make test
+make lint
+make lint-all
+make build
 ```
 
+<<<<<<< HEAD
 The runner compares full precision, Quanto int8/int4 weight-only, and
 weight-plus-activation int8/int4 controls. Generation throughput is measured
 after configurable warm-up generations. It records WikiText-2 perplexity, TruthfulQA multiple-choice
@@ -187,15 +152,21 @@ to compare Quanto's EMA endpoints and default; `--calibration-no-streamline`
 is an additional diagnostic control. These options do not replace representative
 calibration data. See [`docs/hardware-matrix.md`](docs/hardware-matrix.md)
 for the device/model matrix and per-platform caveats.
+=======
+The test ledger is in [testing/TESTING_LOG.md](testing/TESTING_LOG.md) and [testing/results.csv](testing/results.csv). Record the commit, environment, exact command, and outcomes; do not treat an old result as a current run.
+>>>>>>> origin/main
 
-Enable or disable specific tuning modules:
+## Repository map
 
-```bash
-autobliteratus --model-path /path/to/model \
-  --enable tuning.weight_fingerprint_auto tuning.provenance_recording_auto \
-  --disable tuning.refusal_direction_ablation
-```
+- `src/autobliteratus/` — canonical package source.
+- `tests/` — automated tests and fixtures.
+- `benchmarks/` — benchmark tools and result artifacts.
+- `configs/` — example and project configuration.
+- `docs/` — user/developer documentation and dated evidence.
+- `ui/model-mapping-observatory/` — separate UI application.
+- `legacy_root/` — reserved destination for any future fully reviewed legacy relocation; root-level prototypes are not yet represented there and must not be assumed moved.
 
+<<<<<<< HEAD
 Stages with only a class API and no pipeline-compatible module-level
 `run(adapter, context)` function are prototypes and are rejected when explicitly
 enabled or disabled; they are never reported as executed. The architecture
@@ -318,3 +289,6 @@ memory; the package writes the resulting model to the separate output path.
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+=======
+See [docs/REPOSITORY_STATE.md](docs/REPOSITORY_STATE.md) for audited paths, known legacy naming discrepancies, and the relocation policy.
+>>>>>>> origin/main
