@@ -12,7 +12,7 @@ cd AUTOBLITERATUS
 git checkout main
 ```
 
-The Priority 3 checkpoint is commit `REPLACE_WITH_COMMIT_AFTER_PUSH`. Verify the checkout with:
+The Priority 3 checkpoint is commit `8d7cfc721322003955c7d619406e861b1d7e3305`. Verify the checkout with:
 
 ```bash
 git rev-parse HEAD
