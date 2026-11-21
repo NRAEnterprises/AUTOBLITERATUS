@@ -4,12 +4,61 @@ import hashlib
 import json
 import math
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import torch
 
+from autobliteratus.core.model_mapping_discovery import _model_identity
 from autobliteratus.pipeline import run_pipeline
 from autobliteratus.quantization_compat import load_quantized_model
+from autobliteratus.tuning.mapping_promotion_gate import evaluate_mapping_promotion
+
+
+def _promoted_test_capability(model: object) -> tuple[dict[str, object], dict[str, object]]:
+    """Build deterministic evidence for this fixture's exact pre-mutation model."""
+    identity = _model_identity(SimpleNamespace(handle=SimpleNamespace(model=model)))
+    category = "quantization.integration"
+    path = "fixture.model"
+    experiment_id = hashlib.sha256(
+        f"{identity['identity_sha256']}:{category}:{path}".encode()
+    ).hexdigest()
+    measurement_signature = hashlib.sha256(
+        f"{experiment_id}:measured".encode()
+    ).hexdigest()
+    discovery = {
+        "schema_version": 1,
+        "status": "measured",
+        "model_identity": identity,
+        "promotions": [
+            {
+                "experiment_id": experiment_id,
+                "category": category,
+                "path": path,
+                "status": "verified",
+                "measurement_signature": measurement_signature,
+            }
+        ],
+    }
+    capability = evaluate_mapping_promotion(
+        discovery,
+        replay_results={
+            experiment_id: {
+                "status": "passed",
+                "measurement_signature": measurement_signature,
+            }
+        },
+        regression_report={
+            "status": "passed",
+            "regressions": [],
+            "baseline_metrics": {"fixture_metric": 1.0},
+            "post_metrics": {"fixture_metric": 1.0},
+            "metrics": {"fixture_metric": {"regressed": False}},
+        },
+        expected_identity=identity,
+    )
+    assert capability["status"] == "promoted"
+    return capability, identity
 
 
 @pytest.mark.parametrize(
@@ -165,6 +214,7 @@ def test_load_calibrate_edit_export_reload_and_infer(
     if not source_weights.exists():
         source_weights = next(source.glob("*.safetensors"))
     source_digest_before = hashlib.sha256(source_weights.read_bytes()).hexdigest()
+    mapping_capability, mapping_identity = _promoted_test_capability(model)
 
     # A disabled ablation keeps this test focused on quantization preserving
     # an existing model; quantization itself is the tested in-memory edit.
@@ -200,9 +250,14 @@ def test_load_calibrate_edit_export_reload_and_infer(
             calibration_streamline=calibration_streamline,
         device="cpu",
         dtype="float32",
-        enable=extra_stages,
+        allow_mutation=True,
+        enable=["tuning.model_export", *extra_stages],
         disable=["tuning.refusal_direction_ablation"],
         max_shard_size=max_shard_size,
+        stage_options={
+            "mapping_capability": mapping_capability,
+            "mapping_expected_identity": mapping_identity,
+        },
     )
 
     if model_kind == "gpt2":

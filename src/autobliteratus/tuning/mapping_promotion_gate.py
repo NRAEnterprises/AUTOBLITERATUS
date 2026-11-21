@@ -77,6 +77,7 @@ def evaluate_mapping_promotion(
     replay_results: dict[str, Any],
     regression_report: dict[str, Any],
     expected_identity: dict[str, Any],
+    quality_resource_reports: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Validate evidence and return a signed-by-digest capability record.
 
@@ -126,6 +127,18 @@ def evaluate_mapping_promotion(
             replayed.append({"experiment_id": experiment_id, "status": "passed"})
         promotion_ids.append(experiment_id)
     regression = _validate_regression(regression_report, errors)
+    evidence_coordination = None
+    if quality_resource_reports is not None:
+        from autobliteratus.tuning.promotion_evidence_coordinator import (
+            coordinate_promotion_evidence,
+        )
+
+        evidence_coordination = coordinate_promotion_evidence(quality_resource_reports)
+        if evidence_coordination["status"] != "passed":
+            errors.extend(
+                f"quality/resource evidence: {error}"
+                for error in evidence_coordination["errors"]
+            )
     payload = {
         "schema_version": PROMOTION_SCHEMA_VERSION,
         "schema_signature": PROMOTION_SCHEMA_SIGNATURE,
@@ -134,6 +147,8 @@ def evaluate_mapping_promotion(
         "replayability": {"status": "passed" if len(replayed) == len(promotion_ids) and promotion_ids else "rejected", "experiments": replayed},
         "regression": regression,
     }
+    if evidence_coordination is not None:
+        payload["evidence_coordination"] = evidence_coordination
     payload["capability_digest"] = _digest(payload)
     payload["status"] = "promoted" if not errors else "rejected"
     payload["errors"] = errors
@@ -164,5 +179,7 @@ def validate_mapping_capability(capability: Any, expected_identity: dict[str, An
             "regression",
         )
     }
+    if "evidence_coordination" in capability:
+        payload["evidence_coordination"] = capability["evidence_coordination"]
     if _digest(payload) != capability.get("capability_digest"):
         raise MappingPromotionError("Mapping capability digest mismatch.")

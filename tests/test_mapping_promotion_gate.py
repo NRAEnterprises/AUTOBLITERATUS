@@ -57,6 +57,56 @@ def test_promotion_requires_replay_and_regression_evidence() -> None:
     validate_mapping_capability(capability, identity)
 
 
+def test_successful_identity_bound_promotion_record_creation() -> None:
+    identity, discovery, replay, regression, experiment_id = _inputs()
+
+    capability = evaluate_mapping_promotion(
+        discovery,
+        replay_results=replay,
+        regression_report=regression,
+        expected_identity=identity,
+    )
+
+    assert capability["status"] == "promoted"
+    assert capability["mutation_authorized"] is True
+    assert capability["model_identity"] == identity
+    assert capability["promotion_ids"] == [experiment_id]
+    assert capability["replayability"] == {
+        "status": "passed",
+        "experiments": [{"experiment_id": experiment_id, "status": "passed"}],
+    }
+    assert capability["regression"]["status"] == "passed"
+    assert capability["capability_digest"]
+    validate_mapping_capability(capability, expected_identity=identity)
+
+
+def test_promotion_embeds_complete_quality_resource_coordination() -> None:
+    identity, discovery, replay, regression, _ = _inputs()
+    reports = {
+        "capability_report": {"status": "measured"},
+        "safety_report": {"status": "passed"},
+        "latency_report": {"status": "measured"},
+        "throughput_report": {"status": "measured"},
+        "memory_report": {"status": "measured"},
+        "kv_cache_report": {"status": "measured"},
+        "regression_report": {"status": "passed"},
+        "resource_budget_report": {"status": "within_budget"},
+    }
+
+    capability = evaluate_mapping_promotion(
+        discovery,
+        replay_results=replay,
+        regression_report=regression,
+        expected_identity=identity,
+        quality_resource_reports=reports,
+    )
+
+    assert capability["status"] == "promoted"
+    assert capability["evidence_coordination"]["status"] == "passed"
+    assert capability["evidence_coordination"]["mutation_authorized"] is False
+    validate_mapping_capability(capability, expected_identity=identity)
+
+
 def test_full_discovery_envelope_uses_nested_battery() -> None:
     identity, discovery, replay, regression, _ = _inputs()
     envelope = {
