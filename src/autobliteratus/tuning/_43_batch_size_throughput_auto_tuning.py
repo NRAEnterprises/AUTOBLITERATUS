@@ -40,6 +40,24 @@ def _sync(torch, device: Any) -> None:
         synchronize()
 
 
+def _oom_cleanup(torch, device: Any) -> dict[str, Any]:
+    device_type = str(device).split(":", 1)[0]
+    backend = getattr(torch, device_type, None)
+    empty_cache = getattr(backend, "empty_cache", None)
+    action = f"{device_type}.empty_cache"
+    if not callable(empty_cache):
+        empty_cache = getattr(getattr(torch, "cuda", None), "empty_cache", None)
+        action = "cuda.empty_cache_fallback"
+    metadata = {"attempted": callable(empty_cache), "succeeded": False, "action": action}
+    if callable(empty_cache):
+        try:
+            empty_cache()
+            metadata["succeeded"] = True
+        except Exception:  # noqa: BLE001 - cleanup status is reported without raw exception text.
+            metadata["succeeded"] = False
+    return metadata
+
+
 def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
     """Measure a bounded batch-size throughput sweep on the active model/device."""
     import torch
@@ -89,7 +107,17 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
     with torch.inference_mode():
         for batch_size in candidates:
             if cancelled:
-                rows.append({"batch_size": batch_size, "status": "cancelled"})
+                rows.append(
+                    {
+                        "batch_size": batch_size,
+                        "status": "cancelled",
+                        "failure_metadata": {
+                            "kind": "cancelled",
+                            "backend": str(device),
+                            "reason": "requested",
+                        },
+                    }
+                )
                 continue
             batch = [prompts[index % len(prompts)] for index in range(batch_size)]
             try:
@@ -107,6 +135,12 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
                         "status": "timed_out",
                         "sequence_length": int(inputs["input_ids"].shape[-1]),
                         "elapsed_seconds": elapsed,
+                        "failure_metadata": {
+                            "kind": "timeout",
+                            "backend": str(device),
+                            "duration_seconds": elapsed,
+                            "limit_seconds": float(timeout_seconds),
+                        },
                     })
                     warnings.append(f"Batch size {batch_size} exceeded its throughput timeout.")
                     continue
@@ -124,13 +158,17 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
             except RuntimeError as exc:
                 if "out of memory" not in str(exc).lower():
                     raise
-                backend = getattr(torch, str(device).split(":", 1)[0], None)
-                empty_cache = getattr(backend, "empty_cache", None)
-                if not callable(empty_cache):
-                    empty_cache = getattr(getattr(torch, "cuda", None), "empty_cache", None)
-                if callable(empty_cache):
-                    empty_cache()
-                rows.append({"batch_size": batch_size, "status": "oom"})
+                rows.append(
+                    {
+                        "batch_size": batch_size,
+                        "status": "oom",
+                        "failure_metadata": {
+                            "kind": "out_of_memory",
+                            "backend": str(device),
+                            "cleanup": _oom_cleanup(torch, device),
+                        },
+                    }
+                )
                 warnings.append(f"Batch size {batch_size} was stopped after an out-of-memory failure.")
     measured = [row for row in rows if row.get("status") == "measured"]
     best = max(measured, key=lambda row: row["tokens_per_second"], default=None)

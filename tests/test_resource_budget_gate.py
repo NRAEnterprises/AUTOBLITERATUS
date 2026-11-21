@@ -103,6 +103,84 @@ def test_resource_budget_gate_reports_missing_metrics_without_claiming_pass() ->
     }
 
 
+def test_resource_budget_gate_does_not_treat_non_successful_candidates_as_passes() -> None:
+    context = {
+        "resource_budget": {"min_tokens_per_second": 1},
+        "memory_report": {"host_rss_bytes": 1000, "accelerator_allocated_bytes": {}},
+        "throughput_report": {
+            "status": "no_successful_candidates",
+            "candidates": [
+                {"batch_size": 1, "status": "oom"},
+                {"batch_size": 2, "status": "timed_out"},
+                {"batch_size": 4, "status": "cancelled"},
+            ],
+        },
+    }
+
+    report = run(None, context)
+
+    assert report["status"] == "not_evaluated"
+    assert report["observations"] == []
+    assert report["violations"] == []
+    assert report["model_modified"] is False
+    assert report["optimization_performed"] is False
+
+
+def test_resource_budget_gate_preserves_mixed_candidate_outcomes() -> None:
+    context = _context()
+    context["resource_budget"] = {"min_tokens_per_second": 1}
+    context["throughput_report"]["candidates"].append(
+        {
+            "batch_size": 8,
+            "sequence_length": 6,
+            "status": "oom",
+            "failure_metadata": {
+                "kind": "out_of_memory",
+                "backend": "cuda:0",
+                "cleanup": {"attempted": True, "succeeded": True, "action": "cuda.empty_cache"},
+            },
+        }
+    )
+
+    report = run(None, context)
+
+    assert report["status"] == "incomplete"
+    assert report["candidate_outcomes"] == [
+        {
+            "candidate_index": 2,
+            "status": "oom",
+            "batch_size": 8,
+            "sequence_length": 6,
+            "failure_metadata": {
+                "kind": "out_of_memory",
+                "backend": "cuda:0",
+                "cleanup": {"attempted": True, "succeeded": True, "action": "cuda.empty_cache"},
+            },
+        }
+    ]
+    assert len(report["observations"]) == 2
+    assert report["violations"] == []
+
+
+def test_resource_budget_gate_marks_non_finite_measured_values_incomplete() -> None:
+    context = _context()
+    context["resource_budget"] = {"min_tokens_per_second": 1}
+    context["throughput_report"]["candidates"][0]["tokens_per_second"] = float("nan")
+
+    report = run(None, context)
+
+    assert report["status"] == "incomplete"
+    assert report["violations"] == []
+    assert report["missing_metrics"] == [
+        {
+            "observation_index": 0,
+            "metric": "tokens_per_second",
+            "budget": "min_tokens_per_second",
+            "reason": "measurement_unavailable",
+        }
+    ]
+
+
 def test_resource_budget_gate_reports_incomplete_metric_rows() -> None:
     context = _context()
     context["resource_budget"] = {"max_accelerator_allocated_bytes": 3000}

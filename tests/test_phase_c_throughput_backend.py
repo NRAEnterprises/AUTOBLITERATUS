@@ -57,6 +57,11 @@ def test_throughput_backend_records_cancellation_without_running_candidates() ->
 
     assert report["status"] == "cancelled"
     assert [row["status"] for row in report["candidates"]] == ["cancelled", "cancelled"]
+    assert report["candidates"][0]["failure_metadata"] == {
+        "kind": "cancelled",
+        "backend": "cpu",
+        "reason": "requested",
+    }
     assert report["selected_batch_size"] is None
     assert report["model_modified"] is False
 
@@ -71,6 +76,12 @@ def test_throughput_backend_records_timeout_without_selecting_candidate(monkeypa
 
     assert report["status"] == "no_successful_candidates"
     assert report["candidates"][0]["status"] == "timed_out"
+    assert report["candidates"][0]["failure_metadata"] == {
+        "kind": "timeout",
+        "backend": "cpu",
+        "duration_seconds": 0.1,
+        "limit_seconds": 0.001,
+    }
     assert report["selected_batch_size"] is None
 
 
@@ -85,5 +96,15 @@ def test_throughput_backend_recovers_from_out_of_memory(monkeypatch) -> None:
     report = run(adapter, {"throughput_batch_sizes": [1]})
 
     assert report["status"] == "no_successful_candidates"
-    assert report["candidates"] == [{"batch_size": 1, "status": "oom"}]
+    assert report["candidates"][0]["batch_size"] == 1
+    assert report["candidates"][0]["status"] == "oom"
+    assert report["candidates"][0]["failure_metadata"] == {
+        "kind": "out_of_memory",
+        "backend": "cpu",
+        "cleanup": {
+            "attempted": True,
+            "succeeded": True,
+            "action": "cuda.empty_cache_fallback",
+        },
+    }
     assert empty_cache_calls == [True]

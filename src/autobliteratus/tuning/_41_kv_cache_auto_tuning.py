@@ -44,6 +44,24 @@ def _sync(torch, device: Any) -> None:
         synchronize()
 
 
+def _oom_cleanup(torch, device: Any) -> dict[str, Any]:
+    device_type = str(device).split(":", 1)[0]
+    backend = getattr(torch, device_type, None)
+    empty_cache = getattr(backend, "empty_cache", None)
+    action = f"{device_type}.empty_cache"
+    if not callable(empty_cache):
+        empty_cache = getattr(getattr(torch, "cuda", None), "empty_cache", None)
+        action = "cuda.empty_cache_fallback"
+    metadata = {"attempted": callable(empty_cache), "succeeded": False, "action": action}
+    if callable(empty_cache):
+        try:
+            empty_cache()
+            metadata["succeeded"] = True
+        except Exception:  # noqa: BLE001 - cleanup status is reported without raw exception text.
+            metadata["succeeded"] = False
+    return metadata
+
+
 def _resident_bytes() -> int | None:
     try:
         with open("/proc/self/status", encoding="utf-8") as stream:
@@ -215,6 +233,11 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
                                     "batch_size": batch_size,
                                     "use_cache": use_cache,
                                     "status": "cancelled",
+                                    "failure_metadata": {
+                                        "kind": "cancelled",
+                                        "backend": str(device),
+                                        "reason": "requested",
+                                    },
                                 }
                             )
                         continue
@@ -239,12 +262,18 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
                     except RuntimeError as exc:
                         if "out of memory" not in str(exc).lower():
                             raise
+                        cleanup = _oom_cleanup(torch, device)
                         rows.append(
                             {
                                 "sequence_length": sequence_length,
                                 "batch_size": batch_size,
                                 "use_cache": False,
                                 "status": "oom",
+                                "failure_metadata": {
+                                    "kind": "out_of_memory",
+                                    "backend": str(device),
+                                    "cleanup": cleanup,
+                                },
                             }
                         )
                         warnings.append(f"Batch size {batch_size}, sequence length {sequence_length} baseline stopped after OOM.")
@@ -271,15 +300,18 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
                             except RuntimeError as exc:
                                 if "out of memory" not in str(exc).lower():
                                     raise
-                                empty_cache = getattr(getattr(torch, str(device).split(":", 1)[0], None), "empty_cache", None)
-                                if callable(empty_cache):
-                                    empty_cache()
+                                cleanup = _oom_cleanup(torch, device)
                                 rows.append(
                                     {
                                         "sequence_length": sequence_length,
                                         "batch_size": batch_size,
                                         "use_cache": True,
                                         "status": "oom",
+                                        "failure_metadata": {
+                                            "kind": "out_of_memory",
+                                            "backend": str(device),
+                                            "cleanup": cleanup,
+                                        },
                                     }
                                 )
                                 warnings.append(f"Batch size {batch_size}, sequence length {sequence_length} cache mode stopped after OOM.")
@@ -296,6 +328,12 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
                                     "use_cache": use_cache,
                                     "status": "timed_out",
                                     "elapsed_seconds": elapsed,
+                                    "failure_metadata": {
+                                        "kind": "timeout",
+                                        "backend": str(device),
+                                        "duration_seconds": elapsed,
+                                        "limit_seconds": float(timeout_seconds),
+                                    },
                                 }
                             )
                             warnings.append(f"Batch size {batch_size}, sequence length {sequence_length} exceeded its cache timeout.")

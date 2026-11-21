@@ -77,6 +77,27 @@ def test_kv_cache_profiler_reports_bounded_matrix_and_quality_gate() -> None:
     assert report["optimization_performed"] is False
 
 
+def test_kv_cache_profiler_preserves_cancellation_metadata() -> None:
+    adapter = make_kv_cache_fixture_adapter()
+    report = _KV_MODULE.run(
+        adapter,
+        {
+            "kv_cache_sequence_lengths": [2],
+            "kv_cache_modes": [False, True],
+            "kv_cache_batch_sizes": [1, 2],
+            "kv_cache_cancelled": True,
+        },
+    )
+
+    assert report["status"] == "cancelled"
+    assert len(report["candidates"]) == 4
+    assert all(
+        row["failure_metadata"]
+        == {"kind": "cancelled", "backend": "cpu", "reason": "requested"}
+        for row in report["candidates"]
+    )
+
+
 def test_kv_cache_profiler_rejects_unbounded_or_invalid_inputs() -> None:
     adapter = make_kv_cache_fixture_adapter()
 

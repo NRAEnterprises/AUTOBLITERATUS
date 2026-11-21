@@ -92,11 +92,38 @@ def _observations(context: dict[str, Any]) -> tuple[list[dict[str, Any]], list[s
     return observations, missing_reports
 
 
+def _candidate_outcomes(context: dict[str, Any]) -> list[dict[str, Any]]:
+    throughput_report = context.get("throughput_report")
+    rows = throughput_report.get("candidates") if isinstance(throughput_report, dict) else None
+    if not isinstance(rows, list):
+        return []
+    outcomes: list[dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict) or row.get("status") == "measured":
+            continue
+        status = row.get("status")
+        outcome = {
+            "candidate_index": index,
+            "status": status if isinstance(status, str) and status else "unknown",
+            "batch_size": row.get("batch_size"),
+            "sequence_length": row.get("sequence_length"),
+        }
+        failure_metadata = row.get("failure_metadata")
+        if isinstance(failure_metadata, dict):
+            outcome["failure_metadata"] = dict(failure_metadata)
+        elapsed = row.get("elapsed_seconds")
+        if isinstance(elapsed, (int, float)) and not isinstance(elapsed, bool) and math.isfinite(float(elapsed)):
+            outcome["elapsed_seconds"] = elapsed
+        outcomes.append(outcome)
+    return outcomes
+
+
 def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
     """Compare existing diagnostic measurements with caller-supplied budgets."""
     del adapter
     budget = _validate_budget(context.get("resource_budget", {}))
     observations, missing_reports = _observations(context)
+    candidate_outcomes = _candidate_outcomes(context)
     violations: list[dict[str, Any]] = []
     missing_metrics: list[dict[str, Any]] = []
 
@@ -140,7 +167,7 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
         status = "not_evaluated"
     elif violations:
         status = "violations"
-    elif missing_metrics:
+    elif missing_metrics or candidate_outcomes:
         status = "incomplete"
     else:
         status = "within_budget"
@@ -151,6 +178,7 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
         "status": status,
         "budget": budget,
         "observations": observations,
+        "candidate_outcomes": candidate_outcomes,
         "violations": violations,
         "missing_metrics": missing_metrics,
         "optimization_performed": False,
