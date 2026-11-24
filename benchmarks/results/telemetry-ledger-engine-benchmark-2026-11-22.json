@@ -1,0 +1,183 @@
+{
+  "benchmark": "autobliteratus_real_telemetry_ledger_parity_comparison",
+  "engines": {
+    "csv_python": {
+      "build_or_import_ms": null,
+      "description": "Reopen and parse the source CSV for each query; aggregate in Python.",
+      "persistent_bytes": 3167,
+      "queries": {
+        "q1_summary_totals": {
+          "correct": true,
+          "first_measured_after_parity_ms": 0.14606,
+          "max_ms": 0.088063,
+          "median_ms": 0.029805,
+          "min_ms": 0.029304,
+          "p95_ms": 0.03475004999999998,
+          "result_sha256": "218f02b6f0d3d2844b1c6135aedd733dbbdde872199d16f0a7ff0e5386b8aeb0",
+          "rows_returned": 1,
+          "timed_runs": 1000,
+          "warmup_runs": 25
+        },
+        "q2_group_by_platform": {
+          "correct": true,
+          "first_measured_after_parity_ms": 0.04002,
+          "max_ms": 0.074983,
+          "median_ms": 0.029835,
+          "min_ms": 0.029534,
+          "p95_ms": 0.0411035,
+          "result_sha256": "1d2aafd0ae5e03027fe6ad9aa52a8bbae210c1b820c465a425e551c832b9f607",
+          "rows_returned": 2,
+          "timed_runs": 1000,
+          "warmup_runs": 25
+        },
+        "q3_filtered_run_detail_passed_gte_35": {
+          "correct": true,
+          "first_measured_after_parity_ms": 0.036725,
+          "max_ms": 0.071918,
+          "median_ms": 0.030145,
+          "min_ms": 0.029575,
+          "p95_ms": 0.04317695,
+          "result_sha256": "acc37db158036865d8711cf156a941936046f4b587b4b306e30d39457f01613a",
+          "rows_returned": 4,
+          "timed_runs": 1000,
+          "warmup_runs": 25
+        }
+      }
+    },
+    "duckdb": {
+      "build_or_import_ms": 79.130386,
+      "description": "DuckDB file-backed database imported through the project telemetry importer; one thread, one reused read-only connection.",
+      "import_rows_inserted": 5,
+      "import_rows_seen": 5,
+      "persistent_bytes": 2109440,
+      "queries": {
+        "q1_summary_totals": {
+          "correct": true,
+          "first_measured_after_parity_ms": 1.783172,
+          "max_ms": 1.712767,
+          "median_ms": 0.7038695,
+          "min_ms": 0.64419,
+          "p95_ms": 0.7974735000000001,
+          "result_sha256": "218f02b6f0d3d2844b1c6135aedd733dbbdde872199d16f0a7ff0e5386b8aeb0",
+          "rows_returned": 1,
+          "timed_runs": 1000,
+          "warmup_runs": 25
+        },
+        "q2_group_by_platform": {
+          "correct": true,
+          "first_measured_after_parity_ms": 1.697103,
+          "max_ms": 2.136054,
+          "median_ms": 0.8541405,
+          "min_ms": 0.785912,
+          "p95_ms": 0.9741198499999998,
+          "result_sha256": "1d2aafd0ae5e03027fe6ad9aa52a8bbae210c1b820c465a425e551c832b9f607",
+          "rows_returned": 2,
+          "timed_runs": 1000,
+          "warmup_runs": 25
+        },
+        "q3_filtered_run_detail_passed_gte_35": {
+          "correct": true,
+          "first_measured_after_parity_ms": 0.962088,
+          "max_ms": 1.204211,
+          "median_ms": 0.8741145,
+          "min_ms": 0.813594,
+          "p95_ms": 0.9623875,
+          "result_sha256": "acc37db158036865d8711cf156a941936046f4b587b4b306e30d39457f01613a",
+          "rows_returned": 4,
+          "timed_runs": 1000,
+          "warmup_runs": 25
+        }
+      },
+      "version": "2.0.1"
+    },
+    "sqlite": {
+      "build_or_import_ms": 4.174207,
+      "description": "SQLite 3, single process, file-backed normalized runs/summaries tables, one reused connection.",
+      "fts5_used": false,
+      "journal_mode": "delete",
+      "persistent_bytes": 20480,
+      "queries": {
+        "q1_summary_totals": {
+          "correct": true,
+          "first_measured_after_parity_ms": 0.065788,
+          "max_ms": 0.034582,
+          "median_ms": 0.008473,
+          "min_ms": 0.008332,
+          "p95_ms": 0.00906649999999997,
+          "result_sha256": "218f02b6f0d3d2844b1c6135aedd733dbbdde872199d16f0a7ff0e5386b8aeb0",
+          "rows_returned": 1,
+          "timed_runs": 1000,
+          "warmup_runs": 25
+        },
+        "q2_group_by_platform": {
+          "correct": true,
+          "first_measured_after_parity_ms": 0.044768,
+          "max_ms": 0.044627,
+          "median_ms": 0.010116,
+          "min_ms": 0.009975,
+          "p95_ms": 0.013210499999999998,
+          "result_sha256": "1d2aafd0ae5e03027fe6ad9aa52a8bbae210c1b820c465a425e551c832b9f607",
+          "rows_returned": 2,
+          "timed_runs": 1000,
+          "warmup_runs": 25
+        },
+        "q3_filtered_run_detail_passed_gte_35": {
+          "correct": true,
+          "first_measured_after_parity_ms": 0.019128,
+          "max_ms": 0.034742,
+          "median_ms": 0.011157,
+          "min_ms": 0.011016,
+          "p95_ms": 0.0113775,
+          "result_sha256": "acc37db158036865d8711cf156a941936046f4b587b4b306e30d39457f01613a",
+          "rows_returned": 4,
+          "timed_runs": 1000,
+          "warmup_runs": 25
+        }
+      },
+      "version": "3.45.1"
+    }
+  },
+  "environment": {
+    "cpu_model": "AMD EPYC",
+    "duckdb": "2.0.1",
+    "duckdb_threads": 1,
+    "machine": "x86_64",
+    "platform": "Linux-6.18.38+-x86_64-with-glibc2.39",
+    "process_count": 1,
+    "python": "3.12.3",
+    "sqlite": "3.45.1"
+  },
+  "interpretation": "Five real ledger rows are insufficient for scaling conclusions. Timings are host- and cache-dependent and primarily characterize fixed per-query overhead at this size. No database or token-efficiency superiority claim is supported by this run.",
+  "measured_at_utc": "2026-11-22T06:38:11.008474+00:00",
+  "method": {
+    "connections_reused": true,
+    "parity_gate": "Exact canonical result SHA-256 equality against CSV/Python for every query and every timed execution; timing is rejected if parity fails.",
+    "queries": {
+      "q1_summary_totals": "Count runs and sum passed/failed/skipped/total outcomes.",
+      "q2_group_by_platform": "Group runs and outcome totals by platform.",
+      "q3_filtered_run_detail_passed_gte_35": "Return run details with passed >= 35, sorted deterministically."
+    },
+    "query_cache_policy": "Every engine/query executes an untimed parity query before latency measurement, so first_measured_after_parity_ms is not a cold or first-use measurement. OS and database caches are not cleared.",
+    "schema_notes": "SQLite uses the two normalized run/summary tables needed for these queries. DuckDB uses the complete versioned project schema. Storage sizes and import/setup time therefore include different schema/catalog footprints and are not same-schema efficiency comparisons.",
+    "timed_query_runs_per_query_engine": 1000,
+    "warmups_per_query_engine": 25
+  },
+  "parity": {
+    "all_engines_match": true,
+    "all_timed_executions_checked": true,
+    "result_hashes": {
+      "q1_summary_totals": "218f02b6f0d3d2844b1c6135aedd733dbbdde872199d16f0a7ff0e5386b8aeb0",
+      "q2_group_by_platform": "1d2aafd0ae5e03027fe6ad9aa52a8bbae210c1b820c465a425e551c832b9f607",
+      "q3_filtered_run_detail_passed_gte_35": "acc37db158036865d8711cf156a941936046f4b587b4b306e30d39457f01613a"
+    }
+  },
+  "repository_revision": "fd0c0f4ce336c766b8482a2948c25bc68a700b15",
+  "source": {
+    "bytes": 3167,
+    "ledger_rows": 5,
+    "path": "testing/results.csv",
+    "sha256": "06035522e1161003ef39f626ebb5f3a76e0524876229f39b0bc62d90a983fafd",
+    "synthetic_rows": 0
+  },
+  "status": "completed_parity_checked_smoke_scale"
+}

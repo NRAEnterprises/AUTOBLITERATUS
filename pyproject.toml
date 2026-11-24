@@ -25,6 +25,7 @@ dependencies = [
 dev = ["pytest>=7.4", "ruff>=0.6", "mypy>=1.11", "build>=1.2"]
 quantization = ["torch>=2.6", "optimum-quanto>=0.2.7", "ninja>=1.11"]
 benchmark = ["datasets>=3.0"]
+observability = ["duckdb>=2.0,<3.0"]
 
 [project.scripts]
 autobliteratus = "autobliteratus.__main__:main"
@@ -38,4 +39,4 @@ where = ["src"]
 include = ["autobliteratus*"]
 
 [tool.setuptools.package-data]
-autobliteratus = ["py.typed", "core/model_inventory_schema_v1.sql"]
+autobliteratus = ["py.typed", "observability/schema-v1.sql", "core/model_inventory_schema_v1.sql"]

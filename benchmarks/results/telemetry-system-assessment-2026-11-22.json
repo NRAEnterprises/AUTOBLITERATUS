@@ -1,0 +1,276 @@
+{
+  "assessment": "autobliteratus_telemetry_system_assessment",
+  "environment": {
+    "duckdb": "2.0.1",
+    "machine": "x86_64",
+    "platform": "Linux-6.18.38+-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "functional_checks": {
+    "actual_ledger_summary": {
+      "failed": 0,
+      "runs": 5,
+      "skipped": 0,
+      "tests": 173
+    },
+    "closed_file_copy_restore_parity": true,
+    "database_file_bytes": 2109440,
+    "first_import_inserted_all_rows": true,
+    "idempotent": true,
+    "missing_required_tables": [],
+    "repeated_imports": 20,
+    "rows_inserted_by_repeated_imports": 0,
+    "schema_version": 1,
+    "table_row_counts": {
+      "artifact_refs": 0,
+      "llm_usage": 0,
+      "measurements": 0,
+      "pipeline_events": 0,
+      "pipeline_runs": 5,
+      "query_benchmarks": 0,
+      "telemetry_schema": 1,
+      "test_results": 0,
+      "test_summaries": 5
+    },
+    "view_result_sha256": "af2fdfcc15309a3262fd7822a8d51e6192419e82be0a0e8238a85e0f7f5d1254"
+  },
+  "ingestion": {
+    "idempotent_reimport_median_ms": 58.191881,
+    "idempotent_reimport_p95_ms": 64.9918441,
+    "idempotent_reimport_runs": 20,
+    "initial_import_ms": 109.133947,
+    "initial_import_rows_per_second": 45.81525856478003,
+    "note": "Throughput uses only five real rows and includes DuckDB schema initialization plus CSV parsing; treat as a local smoke figure, not a capacity estimate."
+  },
+  "interpretation": "All positive checks apply only to the inspected five-row ledger and implemented paths. The read stress deliberately reuses real rows and does not create a larger synthetic dataset. No generalized database superiority or production capacity claim is supported.",
+  "measured_at_utc": "2026-11-22T06:37:43.829181+00:00",
+  "privacy_redaction_probes": {
+    "cases": {
+      "api_key_assignment": {
+        "secret_marker_removed": true,
+        "stored_sample": false
+      },
+      "authorization_bearer_header": {
+        "secret_marker_removed": false,
+        "stored_sample": false
+      },
+      "bare_bearer": {
+        "secret_marker_removed": true,
+        "stored_sample": false
+      },
+      "bare_token_assignment": {
+        "secret_marker_removed": false,
+        "stored_sample": false
+      },
+      "ghp_like_prefix": {
+        "secret_marker_removed": false,
+        "stored_sample": false
+      },
+      "password_assignment": {
+        "secret_marker_removed": true,
+        "stored_sample": false
+      }
+    },
+    "note": "Only boolean outcomes are persisted in this assessment; the seeded strings are synthetic redaction test markers, not telemetry evidence."
+  },
+  "read_concurrency": {
+    "data_scale_caveat": "Every reader queried the same five-row ledger; aggregate qps is only a small-file read smoke test.",
+    "rounds_per_reader_level": 3,
+    "tests": [
+      {
+        "aggregate_queries_per_second": 1317.6551068749004,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 0.189730984,
+        "errors": 0,
+        "per_query_median_ms": 0.699392,
+        "per_query_p95_ms": 0.94809985,
+        "queries_completed": 250,
+        "queries_per_reader": 250,
+        "readers": 1,
+        "results_exactly_match": true,
+        "round": 1
+      },
+      {
+        "aggregate_queries_per_second": 1220.5224423857019,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 0.204830318,
+        "errors": 0,
+        "per_query_median_ms": 0.8103635,
+        "per_query_p95_ms": 0.8952474499999998,
+        "queries_completed": 250,
+        "queries_per_reader": 250,
+        "readers": 1,
+        "results_exactly_match": true,
+        "round": 2
+      },
+      {
+        "aggregate_queries_per_second": 1337.0567261184126,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 0.186977856,
+        "errors": 0,
+        "per_query_median_ms": 0.6929775,
+        "per_query_p95_ms": 0.92670155,
+        "queries_completed": 250,
+        "queries_per_reader": 250,
+        "readers": 1,
+        "results_exactly_match": true,
+        "round": 3
+      },
+      {
+        "aggregate_queries_per_second": 2420.036957352391,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 0.206608415,
+        "errors": 0,
+        "per_query_median_ms": 0.744074,
+        "per_query_p95_ms": 0.9186081,
+        "queries_completed": 500,
+        "queries_per_reader": 250,
+        "readers": 2,
+        "results_exactly_match": true,
+        "round": 1
+      },
+      {
+        "aggregate_queries_per_second": 2438.553333112238,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 0.2050396,
+        "errors": 0,
+        "per_query_median_ms": 0.7104935,
+        "per_query_p95_ms": 0.89452855,
+        "queries_completed": 500,
+        "queries_per_reader": 250,
+        "readers": 2,
+        "results_exactly_match": true,
+        "round": 2
+      },
+      {
+        "aggregate_queries_per_second": 2687.7656557336763,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 0.186028123,
+        "errors": 0,
+        "per_query_median_ms": 0.680904,
+        "per_query_p95_ms": 0.89721715,
+        "queries_completed": 500,
+        "queries_per_reader": 250,
+        "readers": 2,
+        "results_exactly_match": true,
+        "round": 3
+      },
+      {
+        "aggregate_queries_per_second": 2243.167217880521,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 0.445798241,
+        "errors": 0,
+        "per_query_median_ms": 1.2181815,
+        "per_query_p95_ms": 2.99619765,
+        "queries_completed": 1000,
+        "queries_per_reader": 250,
+        "readers": 4,
+        "results_exactly_match": true,
+        "round": 1
+      },
+      {
+        "aggregate_queries_per_second": 1650.4919173974877,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 0.605879974,
+        "errors": 0,
+        "per_query_median_ms": 1.1077949999999999,
+        "per_query_p95_ms": 3.328270799999999,
+        "queries_completed": 1000,
+        "queries_per_reader": 250,
+        "readers": 4,
+        "results_exactly_match": true,
+        "round": 2
+      },
+      {
+        "aggregate_queries_per_second": 1641.4666302112248,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 0.609211288,
+        "errors": 0,
+        "per_query_median_ms": 1.3031055,
+        "per_query_p95_ms": 2.8881397499999997,
+        "queries_completed": 1000,
+        "queries_per_reader": 250,
+        "readers": 4,
+        "results_exactly_match": true,
+        "round": 3
+      },
+      {
+        "aggregate_queries_per_second": 2003.210393052956,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 0.998397376,
+        "errors": 0,
+        "per_query_median_ms": 3.8246729999999998,
+        "per_query_p95_ms": 5.65198395,
+        "queries_completed": 2000,
+        "queries_per_reader": 250,
+        "readers": 8,
+        "results_exactly_match": true,
+        "round": 1
+      },
+      {
+        "aggregate_queries_per_second": 1804.877731342114,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 1.108108303,
+        "errors": 0,
+        "per_query_median_ms": 4.271714,
+        "per_query_p95_ms": 6.1133365,
+        "queries_completed": 2000,
+        "queries_per_reader": 250,
+        "readers": 8,
+        "results_exactly_match": true,
+        "round": 2
+      },
+      {
+        "aggregate_queries_per_second": 1923.863714891162,
+        "connections": "one independent read-only connection per reader thread",
+        "database_threads_per_connection": 1,
+        "elapsed_s": 1.039574677,
+        "errors": 0,
+        "per_query_median_ms": 4.069426,
+        "per_query_p95_ms": 5.6576268999999995,
+        "queries_completed": 2000,
+        "queries_per_reader": 250,
+        "readers": 8,
+        "results_exactly_match": true,
+        "round": 3
+      }
+    ],
+    "writer_concurrency": "not exercised; design requires one writer process and the pytest plugin does not implement worker spooling"
+  },
+  "scope_not_implemented_or_not_measured": [
+    "pytest-xdist/process-safe spool-and-single-collector workflow",
+    "stage-event ingestion and log redaction at pipeline scale",
+    "automatic schema migrations and downgrade/upgrade tests",
+    "atomic online backup, scheduled backup, and restore automation",
+    "Parquet export/rebuild path",
+    "authoritative LLM provider token accounting and token-cost benchmark",
+    "representative-volume retention, compaction, and resource use",
+    "PostgreSQL/ClickHouse comparison",
+    "crash injection during plugin session-finish batch write"
+  ],
+  "source": {
+    "bytes": 3167,
+    "expected_summary": {
+      "failed": 0,
+      "runs": 5,
+      "skipped": 0,
+      "tests": 173
+    },
+    "path": "testing/results.csv",
+    "rows": 5,
+    "sha256": "06035522e1161003ef39f626ebb5f3a76e0524876229f39b0bc62d90a983fafd",
+    "synthetic_rows": 0
+  },
+  "status": "completed_on_actual_ledger_with_replay_free_read_stress"
+}

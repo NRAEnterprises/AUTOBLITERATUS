@@ -96,6 +96,34 @@ pairings:
     status: environment_blocked
     promotion_gates: [sandbox_test, plan_schema_test, capability_allowlist, recursion_bound, reproducibility_test]
 
+  - id: swift_python_apple_local_runtime
+    languages: [swift, python]
+    responsibility: Apple-native on-device inference and privacy-preserving local tools
+    boundary: Python remains the policy and pipeline owner; Swift is an opt-in Apple sidecar using MLX Swift or Foundation Models
+    interchange: versioned_json_sidecar
+    avoid: treating Apple-only measurements as general ARM or CUDA evidence; granting native tools model-weight write access
+    status: planned_environment_blocked
+    promotion_gates: [apple_toolchain_lock, cpu_reference_equivalence, tool_permission_test, privacy_dataflow_test, model_device_metadata, latency_memory_quality_matrix]
+
+  - id: csharp_python_enterprise_tooling
+    languages: [csharp, python]
+    responsibility: typed .NET tool host and enterprise integration adapters for Python-owned pipelines
+    boundary: C# exposes a versioned MCP or JSON-RPC tool boundary; Python owns model policy and pipeline stages
+    interchange: mcp_or_versioned_json
+    avoid: duplicating the planned Go-TypeScript router without a concrete .NET deployment target; direct model-weight access from the tool host
+    status: planned_environment_blocked
+    promotion_gates: [dotnet_toolchain_lock, protocol_contract_test, auth_boundary_test, malformed_input_test, rate_limit_test, timeout_cancellation_test, audit_event_test]
+
+  - id: python_sql_duckdb_pipeline_telemetry
+    languages: [python, sql]
+    responsibility: versioned local analytical store for test outcomes, pipeline events, resource measurements, artifacts, and LLM usage
+    boundary: Python writers/importers validate and redact events; DuckDB executes SQL analytics; immutable JSONL/Parquet exports remain portable evidence
+    interchange: versioned_sql_schema_and_parquet
+    avoid: raw secrets/prompts by default, silent metric coercion, multi-process writes to one embedded database, or treating database speed as model quality
+    status: csv_importer_and_opt_in_pytest_capture_prototype_not_pipeline_integrated
+    evidence: src/autobliteratus/observability/schema-v1.sql; src/autobliteratus/observability/telemetry_store.py; src/autobliteratus/observability/pytest_plugin.py; tests/test_telemetry_plugin.py
+    promotion_gates: [schema_migration_test, idempotent_ingest_test, secret_redaction_test, source_hash_validation, query_correctness_parity, latency_and_storage_benchmark, llm_token_accounting, concurrent_writer_policy, backup_restore_test]
+
 promotion_flow:
   - design_backend_contract
   - build_sidecar_or_extension_in_dedicated_workspace

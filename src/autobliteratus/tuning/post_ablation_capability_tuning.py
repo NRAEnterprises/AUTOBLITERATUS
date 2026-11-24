@@ -110,6 +110,3 @@ class PostAblationCapabilityTuning:
                 tolerance=base_value * self.tolerance_ratio,
             ))
         return out
-
-
-TOGGLE = {"id": "tuning.post_ablation_capability", "default": True}

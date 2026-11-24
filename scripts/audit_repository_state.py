@@ -19,6 +19,14 @@ INTERNAL_MODULES = {
     "toggle_registry",
     "runtime_selector",
     "tuning_orchestrator",
+    "evaluation_metrics",
+    "mapping_promotion_gate",
+    "mutation_firewall",
+    "mutation_transaction",
+    "promotion_evidence_coordinator",
+    "shared_dict",
+    "delta_weight_export_auto_tuning",
+    "post_ablation_capability_tuning",
     "_101_tuning_orchestrator",
     "_102_runtime_selector",
     "_103_pipeline_entry",
@@ -34,11 +42,17 @@ def inspect_module(path: Path) -> tuple[dict | None, bool]:
             has_run = True
         value = None
         is_toggle = False
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == "TOGGLE" for target in node.targets
+        if (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "TOGGLE"
+                for target in node.targets
+            )
+        ) or (
+            isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id == "TOGGLE"
         ):
-            value, is_toggle = node.value, True
-        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "TOGGLE":
             value, is_toggle = node.value, True
         if is_toggle and value is not None:
             try:

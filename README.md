@@ -9,6 +9,10 @@ AUTOBLITERATUS is an experimental Python toolkit for model ablation, evaluation,
 - **Pipeline and optional stages:** [docs/advanced-stages.md](docs/advanced-stages.md)
 - **Run plans, placement, and sharded exports:** [docs/run-plans-and-sharding.md](docs/run-plans-and-sharding.md)
 - **Hardware evaluation matrix:** [benchmarks/hardware-matrix.md](benchmarks/hardware-matrix.md)
+- **Latest build progress and validation limits:** [docs/build-progress-2026-11-22.md](docs/build-progress-2026-11-22.md)
+- **Remaining pipeline toolchains and handoff gates:** [docs/toolchain-handoff-2026-11-22.md](docs/toolchain-handoff-2026-11-22.md)
+- **Pipeline telemetry database design and measurable build plan:** [docs/pipeline-observability-database-plan.md](docs/pipeline-observability-database-plan.md)
+- **Model inventory database v1, graph capture, probe contract, and qualification limits:** [docs/model-inventory-database-v1.md](docs/model-inventory-database-v1.md)
 - **Dated audit and benchmark evidence:** [docs/](docs/)
 
 AUTOBLITERATUS is meant to coordinate many tuning strategies behind a single execution model, including:
@@ -32,6 +36,14 @@ AUTOBLITERATUS is meant to coordinate many tuning strategies behind a single exe
 The package contains 100 tuning-toggle records. Twenty-two have callable pipeline entrypoints; 78 named research modules remain unavailable prototypes. The CLI lists each status and rejects unavailable stages before loading a model. Mutating stages are opt-in and require explicit mutation authorization, a transactional checkpoint, a promoted mapping capability, and validated export. The sandbox discovery pipeline separately records bounded unknown-factor experiments and promotes only replayable, regression-safe evidence into dynamic mapping history. Do not interpret a prototype's name or class file as evidence its feature is operational.
 
 For the current function-first audit and release-readiness assessment, see [`docs/function-first-pipeline-audit-2026-11-17.md`](docs/function-first-pipeline-audit-2026-11-17.md). Discovery evidence rules are documented in [`docs/automated-discovery-and-dynamic-mapping.md`](docs/automated-discovery-and-dynamic-mapping.md), and runtime promotion requirements are in [`docs/runtime-mapping-promotion-gate.md`](docs/runtime-mapping-promotion-gate.md).
+
+## Model inventory database prototype
+
+`autobliteratus.core.model_inventory` provides a versioned SQLite inventory for model snapshots, stable module/tensor IDs, execution/FX graph traces, evidence-backed role candidates, isolated per-module probe results, removal-stability/recovery measurements, and held-out architecture evaluation metrics. Probe results are evidence only: semantic roles remain candidates, risk findings are warnings rather than removal gates, and this subsystem never grants mutation authority. PyTorch/Transformers checkpoints, accelerators, and real unseen-architecture accuracy have not yet been qualified in the current sandbox. See the [v1 contract and validation boundaries](docs/model-inventory-database-v1.md).
+
+## Optional telemetry database prototype
+
+The opt-in Python + SQL/DuckDB prototype can import the existing aggregate test ledger. Install `duckdb>=2.0,<3.0` in a project-capable environment, then run `PYTHONPATH=src python scripts/telemetry_db.py init`, `PYTHONPATH=src python scripts/telemetry_db.py import-results testing/results.csv`, and `PYTHONPATH=src python scripts/telemetry_db.py summary`. To record per-test outcomes in a local database, explicitly enable the pytest plugin with `PYTHONPATH=src python -m pytest -p autobliteratus.observability.pytest_plugin --autobliteratus-db testing/autobliteratus_telemetry.duckdb`. Without `--autobliteratus-db`, it is inactive. The plugin records hashed test/failure identifiers and durations, not raw test names or raw failure text. The local database file is ignored by Git. The parity-checked CSV/Python, SQLite, and DuckDB comparison uses only the five-row ledger and does not establish general performance or token savings. The baseline assessment found redaction misses and raw command-field storage; a local draft patch now covers those findings and passes persisted-value regression tests, but broader privacy review is still needed before expanding collection. Retry attempts and pipeline logs remain incomplete. See the [database plan](docs/pipeline-observability-database-plan.md), [benchmark report](docs/telemetry-engine-benchmark-2026-11-22.md), and [system assessment](docs/telemetry-system-assessment-2026-11-22.md) for findings and reproducible measurements.
 
 ## Requirements
 
@@ -85,7 +97,6 @@ List the currently discovered toggles:
 autobliteratus --list-toggles
 ```
 
-<<<<<<< HEAD
 Run an inspection or diagnostic pipeline on a model. Mutating stages are disabled
 by default:
 
@@ -96,12 +107,8 @@ autobliteratus --model-path /path/to/model --work-dir ./abliterate_workspace --d
 To authorize a modifying run, the caller must explicitly pass `--allow-mutation`,
 enable the mutation stage, enable validated model export, and provide a promoted
 mapping capability through the runtime integration. Successful export is not
-approval for deployment.
-
-Choose a different output location or projection target:
-=======
-Run against a model you are authorized to modify, using a distinct output directory:
->>>>>>> origin/main
+approval for deployment. The following example selects a separate output path;
+use it only with an explicitly authorized modifying configuration:
 
 ```bash
 autobliteratus --model-path /path/to/model \
@@ -131,7 +138,6 @@ make lint-all
 make build
 ```
 
-<<<<<<< HEAD
 The runner compares full precision, Quanto int8/int4 weight-only, and
 weight-plus-activation int8/int4 controls. Generation throughput is measured
 after configurable warm-up generations. It records WikiText-2 perplexity, TruthfulQA multiple-choice
@@ -152,9 +158,8 @@ to compare Quanto's EMA endpoints and default; `--calibration-no-streamline`
 is an additional diagnostic control. These options do not replace representative
 calibration data. See [`docs/hardware-matrix.md`](docs/hardware-matrix.md)
 for the device/model matrix and per-platform caveats.
-=======
+
 The test ledger is in [testing/TESTING_LOG.md](testing/TESTING_LOG.md) and [testing/results.csv](testing/results.csv). Record the commit, environment, exact command, and outcomes; do not treat an old result as a current run.
->>>>>>> origin/main
 
 ## Repository map
 
@@ -166,7 +171,6 @@ The test ledger is in [testing/TESTING_LOG.md](testing/TESTING_LOG.md) and [test
 - `ui/model-mapping-observatory/` — separate UI application.
 - `legacy_root/` — reserved destination for any future fully reviewed legacy relocation; root-level prototypes are not yet represented there and must not be assumed moved.
 
-<<<<<<< HEAD
 Stages with only a class API and no pipeline-compatible module-level
 `run(adapter, context)` function are prototypes and are rejected when explicitly
 enabled or disabled; they are never reported as executed. The architecture
@@ -289,6 +293,5 @@ memory; the package writes the resulting model to the separate output path.
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-=======
+
 See [docs/REPOSITORY_STATE.md](docs/REPOSITORY_STATE.md) for audited paths, known legacy naming discrepancies, and the relocation policy.
->>>>>>> origin/main
