@@ -38,4 +38,4 @@ where = ["src"]
 include = ["autobliteratus*"]
 
 [tool.setuptools.package-data]
-autobliteratus = ["py.typed"]
+autobliteratus = ["py.typed", "core/model_inventory_schema_v1.sql"]

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from autobliteratus.core.discovery_experiment_pipeline import run_unknown_factor_battery
+from autobliteratus.core.model_inventory import build_model_inventory
 from autobliteratus.core.model_mapping_discovery import discover, update_database
 
 PIPELINE_ID = "model_mapping_discovery_sandbox"
@@ -44,6 +45,20 @@ def _database_path(context: dict[str, Any], root: Path) -> Path:
     return path
 
 
+def _inventory_database_path(context: dict[str, Any], root: Path) -> Path | None:
+    requested = context.get("model_inventory_db_path")
+    if requested is None:
+        return None
+    if not isinstance(requested, (str, os.PathLike)):
+        raise TypeError("model_inventory_db_path must be a path inside sandbox_root.")
+    path = Path(requested).expanduser().resolve()
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise PermissionError("model_inventory_db_path must remain inside sandbox_root.") from exc
+    return path
+
+
 def _assert_sandbox_adapter(adapter: Any, root: Path) -> None:
     if getattr(adapter, "sandboxed", False) is not True:
         raise PermissionError("Mapping discovery requires an adapter constructed for sandbox execution.")
@@ -57,11 +72,27 @@ def run(adapter: Any, context: dict[str, Any]) -> dict[str, Any]:
     root = _sandbox_root(context)
     _assert_sandbox_adapter(adapter, root)
     database_path = _database_path(context, root)
+    inventory_path = _inventory_database_path(context, root)
     discovery_context = dict(context)
     discovery_context["model_mapping_db_path"] = database_path
     report = discover(adapter, discovery_context)
     report["unknown_factor_battery"] = run_unknown_factor_battery(adapter, report, discovery_context)
     update_database(database_path, report)
+    if inventory_path is not None:
+        isolated_model = context.get("model_inventory_isolated_model")
+        inventory_report = build_model_inventory(
+            adapter.handle.model,
+            inventory_path,
+            source_revision=context.get("model_inventory_source_revision"),
+            metadata=context.get("model_inventory_metadata"),
+            isolated_model=isolated_model,
+            invoke=context.get("model_inventory_invoke"),
+            probe_adapter=adapter if context.get("model_inventory_run_probes") is True else None,
+            probe_context=context.get("model_inventory_probe_context"),
+            capture_fx=bool(isolated_model is not None and context.get("model_inventory_capture_fx", True)),
+        )
+        report["model_inventory"] = inventory_report
+        context["model_inventory_report"] = inventory_report
     report.update(
         {
             "pipeline_id": PIPELINE_ID,
