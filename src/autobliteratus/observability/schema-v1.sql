@@ -141,3 +141,96 @@ SELECT
     AVG(CASE WHEN correct THEN 1.0 ELSE 0.0 END) AS exact_success_rate
 FROM query_benchmarks
 GROUP BY workload_id, engine;
+
+-- Resource-budget v1 reports have no source run ID or measurement timestamp.
+-- Keep them in dedicated tables rather than inventing either field.
+CREATE TABLE IF NOT EXISTS resource_budget_reports (
+    report_id VARCHAR PRIMARY KEY,
+    stage_id VARCHAR NOT NULL,
+    schema_version INTEGER NOT NULL CHECK (schema_version = 1),
+    status VARCHAR NOT NULL CHECK (status IN (
+        'not_configured', 'not_evaluated', 'violations', 'incomplete', 'within_budget'
+    )),
+    source_sha256 VARCHAR NOT NULL,
+    budget JSON NOT NULL,
+    observation_count INTEGER NOT NULL CHECK (observation_count >= 0),
+    finding_count INTEGER NOT NULL CHECK (finding_count >= 0),
+    imported_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS resource_budget_observations (
+    report_id VARCHAR NOT NULL REFERENCES resource_budget_reports(report_id),
+    observation_index INTEGER NOT NULL CHECK (observation_index >= 0),
+    candidate_index INTEGER NOT NULL CHECK (candidate_index >= 0),
+    batch_size BIGINT CHECK (batch_size IS NULL OR batch_size > 0),
+    sequence_length BIGINT CHECK (sequence_length IS NULL OR sequence_length > 0),
+    tokens_per_second DOUBLE,
+    latency_ms DOUBLE,
+    host_rss_bytes BIGINT CHECK (host_rss_bytes IS NULL OR host_rss_bytes >= 0),
+    accelerator_allocated_bytes BIGINT CHECK (
+        accelerator_allocated_bytes IS NULL OR accelerator_allocated_bytes >= 0
+    ),
+    PRIMARY KEY (report_id, observation_index)
+);
+
+CREATE TABLE IF NOT EXISTS resource_budget_findings (
+    report_id VARCHAR NOT NULL REFERENCES resource_budget_reports(report_id),
+    finding_kind VARCHAR NOT NULL CHECK (
+        finding_kind IN ('violation', 'missing_metric', 'candidate_outcome')
+    ),
+    finding_index INTEGER NOT NULL CHECK (finding_index >= 0),
+    code VARCHAR NOT NULL,
+    metric VARCHAR,
+    budget_key VARCHAR,
+    observed JSON,
+    limit_value JSON,
+    unit VARCHAR,
+    details JSON NOT NULL,
+    PRIMARY KEY (report_id, finding_kind, finding_index)
+);
+
+CREATE TABLE IF NOT EXISTS benchmark_imports (
+    report_id VARCHAR PRIMARY KEY,
+    report_kind VARCHAR NOT NULL CHECK (
+        report_kind IN ('telemetry_engine_json_v1', 'query_benchmark_csv_v1')
+    ),
+    source_sha256 VARCHAR NOT NULL,
+    record_count INTEGER NOT NULL CHECK (record_count > 0),
+    imported_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS benchmark_measurements (
+    measurement_id VARCHAR PRIMARY KEY,
+    report_id VARCHAR NOT NULL REFERENCES benchmark_imports(report_id),
+    source_record_index INTEGER NOT NULL CHECK (source_record_index >= 0),
+    run_id VARCHAR REFERENCES pipeline_runs(run_id),
+    workload_id VARCHAR NOT NULL,
+    engine VARCHAR NOT NULL,
+    engine_version VARCHAR,
+    query_id VARCHAR NOT NULL,
+    latency_statistic VARCHAR NOT NULL CHECK (
+        latency_statistic IN ('observed', 'median', 'p95', 'first_after_parity')
+    ),
+    correct BOOLEAN NOT NULL,
+    latency_ms DOUBLE NOT NULL CHECK (latency_ms >= 0),
+    rows_returned BIGINT NOT NULL CHECK (rows_returned >= 0),
+    input_tokens BIGINT CHECK (input_tokens IS NULL OR input_tokens >= 0),
+    output_tokens BIGINT CHECK (output_tokens IS NULL OR output_tokens >= 0),
+    context_bytes BIGINT CHECK (context_bytes IS NULL OR context_bytes >= 0),
+    result_sha256 VARCHAR,
+    cache_state VARCHAR CHECK (
+        cache_state IS NULL OR cache_state IN ('cold', 'warm', 'after_parity', 'unknown', 'not_applicable')
+    ),
+    hardware_fingerprint VARCHAR,
+    measured_at TIMESTAMPTZ,
+    UNIQUE (report_id, source_record_index)
+);
+
+CREATE VIEW IF NOT EXISTS v_imported_benchmark_measurements AS
+SELECT
+    i.report_kind,
+    i.source_sha256,
+    i.imported_at,
+    b.*
+FROM benchmark_imports AS i
+JOIN benchmark_measurements AS b USING (report_id);

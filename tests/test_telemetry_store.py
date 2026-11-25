@@ -148,3 +148,29 @@ def test_import_rejects_bad_counts_without_silently_coercing(tmp_path):
         "failed": 0,
         "skipped": 0,
     }
+
+
+def test_import_rejects_oversized_legacy_csv_before_database_creation(tmp_path):
+    source = tmp_path / "oversized-results.csv"
+    with source.open("wb") as stream:
+        stream.truncate(64 * 1024 * 1024 + 1)
+
+    with pytest.raises(ValueError, match="64 MiB"):
+        import_results_csv(source, tmp_path / "telemetry.duckdb")
+
+    assert not (tmp_path / "telemetry.duckdb").exists()
+
+
+def test_initialize_database_restricts_local_file_permissions(tmp_path):
+    import os
+    import stat
+
+    if os.name == "nt":
+        pytest.skip("POSIX file mode bits are not portable to Windows")
+    path = tmp_path / "private-telemetry.duckdb"
+    initialize_database(path)
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+    path.chmod(0o644)
+    initialize_database(path)
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
