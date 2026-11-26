@@ -131,6 +131,73 @@ def test_cli_import_to_query_reporting_workflow(tmp_path):
     assert event_import["records_inserted"] == 1
     assert event_replay["records_inserted"] == 0
 
+    quality_source = tmp_path / "quality-outcomes.json"
+    quality_source.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "run_id": run_id,
+                "measurements": [
+                    {
+                        "metric": "answer_quality",
+                        "value": 0.92,
+                        "unit": "score",
+                        "measured_at": "2026-11-25T18:05:00Z",
+                        "stage": "evaluation",
+                        "dimensions": {"dataset": "smoke-v1"},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    quality_import = _json_result(
+        database, "import-quality-outcomes", str(quality_source)
+    )
+    quality_replay = _json_result(
+        database, "import-quality-outcomes", str(quality_source)
+    )
+    assert quality_import["records_inserted"] == 1
+    assert quality_replay["records_inserted"] == 0
+
+    artifact_source = tmp_path / "artifact-manifest.json"
+    artifact_source.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifacts": [
+                    {
+                        "run_id": run_id,
+                        "artifact_sha256": "c" * 64,
+                        "artifact_kind": "quality_report",
+                        "uri": "https://artifacts.example.test/reports/quality.json",
+                        "size_bytes": 321,
+                        "content_type": "application/json",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    artifact_import = _json_result(
+        database, "import-artifact-manifest", str(artifact_source)
+    )
+    artifact_replay = _json_result(
+        database, "import-artifact-manifest", str(artifact_source)
+    )
+    assert artifact_import["records_inserted"] == 1
+    assert artifact_replay["records_inserted"] == 0
+
+    quality_report = _json_result(
+        database,
+        "measurement-summary",
+        "--metric", "answer_quality",
+        "--stage", "evaluation",
+        "--dimensions", '{"dataset":"smoke-v1"}',
+    )
+    assert quality_report["rows"][0]["mean_value"] == 0.92
+    assert quality_report["metadata"]["provenance"]["commits"] == ["commit-e2e"]
+
     report = _json_result(
         database,
         "run-outcomes",
@@ -165,9 +232,14 @@ def test_cli_import_to_query_reporting_workflow(tmp_path):
             "SELECT run_id, event_type FROM pipeline_events WHERE event_id = ?",
             ["event-workflow-001"],
         ).fetchone()
+        persisted_artifact = connection.execute(
+            "SELECT run_id, artifact_kind, size_bytes FROM artifact_refs WHERE artifact_sha256 = ?",
+            ["c" * 64],
+        ).fetchone()
     finally:
         connection.close()
     assert persisted_event == (run_id, "stage_completed")
+    assert persisted_artifact == (run_id, "quality_report", 321)
 
 
 def test_import_stage_events_command_reports_insert_counts_and_redacts(tmp_path, database):
@@ -274,3 +346,120 @@ def test_query_cli_rejects_invalid_date_and_non_object_dimensions(database):
     assert "YYYY-MM-DD" in bad_date.stderr
     assert bad_dimensions.returncode == 2
     assert "JSON object" in bad_dimensions.stderr
+
+
+def test_quality_latency_pareto_cli_returns_exact_frontier_without_writes(tmp_path):
+    database = initialize_database(tmp_path / "pareto-cli.duckdb")
+    connection = duckdb.connect(str(database))
+    candidates = [
+        ("fast-low", 0.80, 90.0, date(2026, 11, 20)),
+        ("accurate-slow", 0.95, 150.0, date(2026, 11, 21)),
+        ("dominated", 0.70, 180.0, date(2026, 11, 22)),
+    ]
+    connection.executemany(
+        "INSERT INTO pipeline_runs (run_id, run_date, commit_sha, platform, command, status) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        [
+            (f"pareto-{candidate}", day, f"sha-{candidate}", "linux", "benchmark", "passed")
+            for candidate, _, _, day in candidates
+        ],
+    )
+    measurements = []
+    for candidate, quality, latency, day in candidates:
+        measured_at = datetime(day.year, day.month, day.day, 12, tzinfo=timezone.utc)
+        dimensions = f'{{"workload_id":"workload-a","backend":"{candidate}"}}'
+        for metric, stage, value, unit in (
+            ("answer_quality", "evaluate", quality, "score"),
+            ("latency_ms", "benchmark", latency, "ms"),
+        ):
+            measurements.append(
+                (
+                    f"{candidate}-{metric}", f"pareto-{candidate}", stage,
+                    metric, value, unit, measured_at, dimensions,
+                )
+            )
+    connection.executemany(
+        "INSERT INTO measurements (measurement_id, run_id, stage, metric, value, unit, measured_at, dimensions) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        measurements,
+    )
+    connection.close()
+
+    report = _json_result(
+        database,
+        "quality-latency-pareto",
+        "--quality-metric", "answer_quality",
+        "--latency-metric", "latency_ms",
+        "--cohort-by", "workload_id",
+        "--candidate-by", "backend",
+        "--quality-stage", "evaluate",
+        "--latency-stage", "benchmark",
+        "--start-date", "2026-11-20",
+        "--end-date", "2026-11-22",
+    )
+
+    assert report["name"] == "quality_latency_pareto"
+    rows = {row["candidate"]["backend"]: row for row in report["rows"]}
+    assert set(rows) == {"fast-low", "accurate-slow", "dominated"}
+    assert rows["fast-low"]["quality_value"] == 0.8
+    assert rows["fast-low"]["latency_value"] == 90.0
+    assert rows["fast-low"]["paired_runs"] == 1
+    assert rows["fast-low"]["pareto_efficient"] is True
+    assert rows["accurate-slow"]["quality_value"] == 0.95
+    assert rows["accurate-slow"]["latency_value"] == 150.0
+    assert rows["accurate-slow"]["pareto_efficient"] is True
+    assert rows["dominated"]["pareto_efficient"] is False
+    assert rows["dominated"]["dominated_by"] == [
+        {"backend": "accurate-slow"}, {"backend": "fast-low"}
+    ]
+    assert report["metadata"]["filters"] == {
+        "quality_metric": "answer_quality",
+        "latency_metric": "latency_ms",
+        "quality_stage": "evaluate",
+        "latency_stage": "benchmark",
+        "cohort_dimensions": ["workload_id"],
+        "candidate_dimensions": ["backend"],
+        "quality_direction": "higher",
+        "start_date": "2026-11-20",
+        "end_date": "2026-11-22",
+        "min_paired_runs": 1,
+        "requested_limit": 200,
+        "applied_limit": 200,
+    }
+    assert report["metadata"]["coverage"]["paired_run_candidate_keys"] == 3
+    assert report["metadata"]["coverage"]["returned_rows"] == 3
+    assert report["metadata"]["coverage"]["truncated"] is False
+    assert report["metadata"]["provenance"]["commits"] == [
+        "sha-accurate-slow", "sha-dominated", "sha-fast-low"
+    ]
+
+    connection = duckdb.connect(str(database), read_only=True)
+    try:
+        assert connection.execute("SELECT COUNT(*) FROM measurements").fetchone()[0] == 6
+        assert connection.execute("SELECT COUNT(*) FROM pipeline_runs").fetchone()[0] == 3
+    finally:
+        connection.close()
+
+
+def test_quality_latency_pareto_cli_rejects_bad_dimension_arguments(database):
+    bad_name = _run_cli(
+        database,
+        "quality-latency-pareto",
+        "--quality-metric", "answer_quality",
+        "--latency-metric", "latency_ms",
+        "--cohort-by", "workload_id; DROP TABLE measurements",
+        "--candidate-by", "backend",
+    )
+    overlap = _run_cli(
+        database,
+        "quality-latency-pareto",
+        "--quality-metric", "answer_quality",
+        "--latency-metric", "latency_ms",
+        "--cohort-by", "backend",
+        "--candidate-by", "backend",
+    )
+
+    assert bad_name.returncode == 2
+    assert "simple identifier" in bad_name.stderr
+    assert overlap.returncode == 2
+    assert "must be disjoint" in overlap.stderr

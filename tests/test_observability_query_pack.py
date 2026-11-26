@@ -12,6 +12,7 @@ from autobliteratus.observability import query_pack
 from autobliteratus.observability.query_pack import (
     MAX_REPORT_ROWS,
     measurement_summary,
+    quality_latency_pareto_report,
     repeated_test_failures,
     run_outcomes,
     token_usage_summary,
@@ -202,3 +203,174 @@ def test_queries_open_read_only_and_do_not_mutate_database(database, monkeypatch
             connection.close()
     after = run_outcomes(database).metadata["coverage"]["source_rows"]
     assert before == after == 3
+
+
+def _insert_pareto_fixture(database):
+    connection = duckdb.connect(str(database))
+    candidates = [
+        ("fast-low", 0.80, 90.0, date(2026, 11, 20)),
+        ("accurate-slow", 0.95, 150.0, date(2026, 11, 21)),
+        ("dominated", 0.70, 180.0, date(2026, 11, 22)),
+    ]
+    connection.executemany(
+        "INSERT INTO pipeline_runs (run_id, run_date, commit_sha, platform, command, status) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        [
+            (f"pareto-{candidate}", day, f"sha-{candidate}", "linux", "benchmark", "passed")
+            for candidate, _, _, day in candidates
+        ],
+    )
+    measurements = []
+    for candidate, quality, latency, day in candidates:
+        measured_at = datetime(day.year, day.month, day.day, 12, tzinfo=timezone.utc)
+        dimensions = f'{{"workload_id":"workload-a","backend":"{candidate}"}}'
+        for metric, stage, value, unit in (
+            ("answer_quality", "evaluate", quality, "score"),
+            ("latency_ms", "benchmark", latency, "ms"),
+        ):
+            measurements.append(
+                (
+                    f"{candidate}-{metric}", f"pareto-{candidate}", stage,
+                    metric, value, unit, measured_at, dimensions,
+                )
+            )
+    connection.executemany(
+        "INSERT INTO measurements (measurement_id, run_id, stage, metric, value, unit, measured_at, dimensions) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        measurements,
+    )
+    connection.close()
+
+
+def test_quality_latency_pareto_query_is_filtered_bounded_and_read_only(database, monkeypatch):
+    _insert_pareto_fixture(database)
+    original_connect = duckdb.connect
+    access_modes = []
+
+    class DuckDBFacade:
+        @staticmethod
+        def connect(path, *, read_only=False):
+            access_modes.append(read_only)
+            return original_connect(path, read_only=read_only)
+
+    monkeypatch.setattr(query_pack, "_duckdb", lambda: DuckDBFacade)
+    connection = original_connect(str(database), read_only=True)
+    before = connection.execute("SELECT COUNT(*) FROM measurements").fetchone()[0]
+    connection.close()
+
+    report = quality_latency_pareto_report(
+        database,
+        quality_metric="answer_quality",
+        latency_metric="latency_ms",
+        cohort_dimensions=["workload_id"],
+        candidate_dimensions=["backend"],
+        quality_stage="evaluate",
+        latency_stage="benchmark",
+        start_date=date(2026, 11, 20),
+        end_date=date(2026, 11, 21),
+    )
+
+    assert access_modes == [True]
+    assert [row["candidate"]["backend"] for row in report.rows] == [
+        "accurate-slow", "fast-low"
+    ]
+    by_candidate = {row["candidate"]["backend"]: row for row in report.rows}
+    assert by_candidate["fast-low"]["quality_value"] == 0.8
+    assert by_candidate["fast-low"]["latency_value"] == 90.0
+    assert all(row["pareto_efficient"] for row in report.rows)
+    assert report.metadata["filters"]["quality_stage"] == "evaluate"
+    assert report.metadata["filters"]["start_date"] == "2026-11-20"
+    assert report.metadata["filters"]["end_date"] == "2026-11-21"
+    assert report.metadata["coverage"]["quality_records_after_filters"] == 2
+    assert report.metadata["coverage"]["latency_records_after_filters"] == 2
+
+    connection = original_connect(str(database), read_only=True)
+    after = connection.execute("SELECT COUNT(*) FROM measurements").fetchone()[0]
+    connection.close()
+    assert before == after == 9
+
+
+def test_quality_latency_pareto_query_fails_instead_of_truncating_input(
+    database, monkeypatch
+):
+    _insert_pareto_fixture(database)
+    monkeypatch.setattr(query_pack, "MAX_INPUT_OBSERVATIONS", 5)
+
+    with pytest.raises(ValueError, match="input limit"):
+        quality_latency_pareto_report(
+            database,
+            quality_metric="answer_quality",
+            latency_metric="latency_ms",
+            cohort_dimensions=["workload_id"],
+            candidate_dimensions=["backend"],
+            quality_stage="evaluate",
+            latency_stage="benchmark",
+        )
+
+
+def test_quality_latency_pareto_binds_stage_values_in_fixed_sql(database, monkeypatch):
+    _insert_pareto_fixture(database)
+    original_connect = duckdb.connect
+    executions = []
+
+    class ConnectionProxy:
+        def __init__(self, connection):
+            self.connection = connection
+
+        def execute(self, sql, params=None):
+            executions.append((sql, params))
+            return self.connection.execute(sql, params)
+
+        def close(self):
+            self.connection.close()
+
+    class DuckDBFacade:
+        @staticmethod
+        def connect(path, *, read_only=False):
+            assert read_only is True
+            return ConnectionProxy(original_connect(path, read_only=read_only))
+
+    monkeypatch.setattr(query_pack, "_duckdb", lambda: DuckDBFacade)
+    injected_stage = "evaluate' OR 1=1 --"
+
+    report = quality_latency_pareto_report(
+        database,
+        quality_metric="answer_quality",
+        latency_metric="latency_ms",
+        cohort_dimensions=["workload_id"],
+        candidate_dimensions=["backend"],
+        quality_stage=injected_stage,
+        latency_stage="benchmark",
+    )
+
+    assert report.rows == ()
+    assert len(executions) == 1
+    sql, params = executions[0]
+    assert injected_stage not in sql
+    assert injected_stage in params
+
+
+@pytest.mark.parametrize(
+    ("quality_metric", "latency_metric", "error"),
+    [
+        ("quality metric", "latency_ms", "quality_metric must be a short safe metric label"),
+        ("answer_quality", "latency; DROP TABLE measurements", "latency_metric must be a short safe metric label"),
+        ("same_metric", "same_metric", "quality_metric and latency_metric must differ"),
+    ],
+)
+def test_quality_latency_pareto_validates_metric_labels_before_connect(
+    database, monkeypatch, quality_metric, latency_metric, error
+):
+    def forbidden_connect(*args, **kwargs):
+        pytest.fail("DuckDB must not be opened for invalid Pareto metric labels")
+
+    monkeypatch.setattr(query_pack, "_duckdb", lambda: type("DuckDB", (), {"connect": forbidden_connect}))
+
+    with pytest.raises(ValueError, match=error):
+        quality_latency_pareto_report(
+            database,
+            quality_metric=quality_metric,
+            latency_metric=latency_metric,
+            cohort_dimensions=["workload_id"],
+            candidate_dimensions=["backend"],
+        )

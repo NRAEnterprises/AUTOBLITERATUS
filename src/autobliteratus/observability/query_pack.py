@@ -10,6 +10,14 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
+from .pareto import (
+    DEFAULT_REPORT_LIMIT,
+    MAX_INPUT_OBSERVATIONS,
+    MeasurementObservation,
+    ParetoReport,
+    build_quality_latency_pareto,
+    validate_metric_labels,
+)
 from .telemetry_store import _duckdb
 
 MAX_REPORT_ROWS = 1_000
@@ -364,4 +372,89 @@ def token_usage_summary(
                  "start_date": start_date, "end_date": end_date},
         requested_limit=requested,
         applied_limit=capped,
+    )
+
+
+def quality_latency_pareto_report(
+    database_path: str | Path,
+    *,
+    quality_metric: str,
+    latency_metric: str,
+    cohort_dimensions: list[str] | tuple[str, ...],
+    candidate_dimensions: list[str] | tuple[str, ...],
+    quality_stage: str | None = None,
+    latency_stage: str | None = None,
+    quality_direction: str = "higher",
+    start_date: date | None = None,
+    end_date: date | None = None,
+    min_paired_runs: int = 1,
+    limit: int = DEFAULT_REPORT_LIMIT,
+) -> ParetoReport:
+    """Read bounded measurement rows and build the quality/latency Pareto report."""
+    validate_metric_labels(quality_metric, latency_metric)
+    start_date, end_date = _date_range(start_date, end_date)
+    _limit(limit)
+    if (
+        isinstance(min_paired_runs, bool)
+        or not isinstance(min_paired_runs, int)
+        or min_paired_runs < 1
+    ):
+        raise ValueError("min_paired_runs must be a positive integer")
+
+    metric_clauses: list[str] = []
+    params: list[Any] = []
+    for metric, stage in (
+        (quality_metric, quality_stage),
+        (latency_metric, latency_stage),
+    ):
+        clause = "m.metric = ?"
+        params.append(metric)
+        if stage is not None:
+            clause += " AND m.stage = ?"
+            params.append(stage)
+        metric_clauses.append(f"({clause})")
+
+    conditions = ["(" + " OR ".join(metric_clauses) + ")"]
+    if start_date is not None:
+        conditions.append("CAST(m.measured_at AS DATE) >= ?")
+        params.append(start_date)
+    if end_date is not None:
+        conditions.append("CAST(m.measured_at AS DATE) <= ?")
+        params.append(end_date)
+    params.append(MAX_INPUT_OBSERVATIONS + 1)
+    sql = (
+        "SELECT m.run_id, r.commit_sha, m.measured_at, m.stage, m.metric, "
+        "m.value, m.unit, CAST(m.dimensions AS VARCHAR) AS dimensions "
+        "FROM measurements AS m JOIN pipeline_runs AS r USING (run_id) "
+        "WHERE " + " AND ".join(conditions) + " "
+        "ORDER BY m.metric, m.measured_at, m.run_id, m.measurement_id "
+        "LIMIT ?"
+    )
+    connection = _duckdb().connect(
+        str(Path(database_path).expanduser()), read_only=True
+    )
+    try:
+        records = connection.execute(sql, params).fetchall()
+    finally:
+        connection.close()
+
+    if len(records) > MAX_INPUT_OBSERVATIONS:
+        raise ValueError(
+            f"Pareto report exceeds the {MAX_INPUT_OBSERVATIONS}-observation input limit; "
+            "narrow the date range or query filters"
+        )
+    observations = [MeasurementObservation(*record) for record in records]
+    return build_quality_latency_pareto(
+        observations,
+        quality_metric=quality_metric,
+        latency_metric=latency_metric,
+        cohort_dimensions=cohort_dimensions,
+        candidate_dimensions=candidate_dimensions,
+        quality_stage=quality_stage,
+        latency_stage=latency_stage,
+        quality_direction=quality_direction,
+        start_date=start_date,
+        end_date=end_date,
+        min_paired_runs=min_paired_runs,
+        limit=limit,
     )

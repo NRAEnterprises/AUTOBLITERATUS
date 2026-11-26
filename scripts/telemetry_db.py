@@ -5,11 +5,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from datetime import date
 from pathlib import Path
 
+from autobliteratus.observability.artifact_manifest import import_artifact_manifest
+from autobliteratus.observability.quality_outcomes import import_quality_outcomes
 from autobliteratus.observability.query_pack import (
     measurement_summary,
+    quality_latency_pareto_report,
     repeated_test_failures,
     run_outcomes,
     token_usage_summary,
@@ -41,6 +45,27 @@ def _json_object_argument(value: str) -> dict[str, object]:
         raise argparse.ArgumentTypeError("dimensions must be valid JSON") from exc
     if not isinstance(parsed, dict):
         raise argparse.ArgumentTypeError("dimensions must be a JSON object")
+    return parsed
+
+
+def _dimension_keys_argument(value: str) -> tuple[str, ...]:
+    keys = tuple(part.strip() for part in value.split(","))
+    if not keys or any(not key for key in keys):
+        raise argparse.ArgumentTypeError("dimension keys must be a non-empty comma-separated list")
+    if len(set(keys)) != len(keys):
+        raise argparse.ArgumentTypeError("dimension keys must not contain duplicates")
+    if any(not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key) for key in keys):
+        raise argparse.ArgumentTypeError("dimension keys must be simple identifier strings")
+    return keys
+
+
+def _positive_integer_argument(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("value must be a positive integer") from exc
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("value must be a positive integer")
     return parsed
 
 
@@ -80,6 +105,16 @@ def main() -> int:
         help="import bounded, versioned stage-event JSONL",
     )
     stage_importer.add_argument("jsonl_path", help="path to stage-event JSONL")
+    quality_importer = subparsers.add_parser(
+        "import-quality-outcomes",
+        help="import a strict numeric quality-outcomes v1 JSON report",
+    )
+    quality_importer.add_argument("report_path", help="path to quality-outcomes JSON")
+    artifact_importer = subparsers.add_parser(
+        "import-artifact-manifest",
+        help="import asserted artifact-manifest v1 metadata",
+    )
+    artifact_importer.add_argument("manifest_path", help="path to artifact-manifest JSON")
     subparsers.add_parser("summary", help="print aggregate run and test counts")
 
     outcomes = subparsers.add_parser("run-outcomes", help="report run outcomes by commit, platform, and status")
@@ -116,7 +151,30 @@ def main() -> int:
     usage.add_argument("--purpose")
     _add_date_limit_arguments(usage)
 
+    pareto = subparsers.add_parser(
+        "quality-latency-pareto",
+        help="compare quality and latency and identify Pareto-efficient candidates",
+    )
+    pareto.add_argument("--quality-metric", required=True)
+    pareto.add_argument("--latency-metric", required=True)
+    pareto.add_argument("--cohort-by", required=True, type=_dimension_keys_argument)
+    pareto.add_argument("--candidate-by", required=True, type=_dimension_keys_argument)
+    pareto.add_argument("--quality-stage")
+    pareto.add_argument("--latency-stage")
+    pareto.add_argument(
+        "--quality-direction", choices=("higher", "lower"), default="higher"
+    )
+    pareto.add_argument("--start-date", type=_date_argument)
+    pareto.add_argument("--end-date", type=_date_argument)
+    pareto.add_argument("--min-paired-runs", type=_positive_integer_argument, default=1)
+    pareto.add_argument("--limit", type=_positive_integer_argument, default=200)
+
     args = parser.parse_args()
+
+    if args.command == "quality-latency-pareto" and (
+        set(args.cohort_by) & set(args.candidate_by)
+    ):
+        parser.error("--cohort-by and --candidate-by dimensions must be disjoint")
 
     db_path = Path(args.db)
     if args.command == "init":
@@ -133,6 +191,12 @@ def main() -> int:
         _print_json(result.__dict__)
     elif args.command == "import-stage-events":
         result = import_stage_events(args.jsonl_path, db_path)
+        _print_json(result.__dict__)
+    elif args.command == "import-quality-outcomes":
+        result = import_quality_outcomes(args.report_path, db_path)
+        _print_json(result.__dict__)
+    elif args.command == "import-artifact-manifest":
+        result = import_artifact_manifest(args.manifest_path, db_path)
         _print_json(result.__dict__)
     elif args.command == "summary":
         _print_json(summarize_database(db_path))
@@ -171,6 +235,22 @@ def main() -> int:
             limit=args.limit,
         )
         _print_json({"name": report.name, "rows": report.rows, "metadata": report.metadata})
+    elif args.command == "quality-latency-pareto":
+        report = quality_latency_pareto_report(
+            db_path,
+            quality_metric=args.quality_metric,
+            latency_metric=args.latency_metric,
+            cohort_dimensions=args.cohort_by,
+            candidate_dimensions=args.candidate_by,
+            quality_stage=args.quality_stage,
+            latency_stage=args.latency_stage,
+            quality_direction=args.quality_direction,
+            start_date=args.start_date,
+            end_date=args.end_date,
+            min_paired_runs=args.min_paired_runs,
+            limit=args.limit,
+        )
+        _print_json(report.as_dict())
     else:
         report = token_usage_summary(
             db_path,
